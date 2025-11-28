@@ -65,7 +65,7 @@ Auteur
 | Nom | Prénom | Github |
 | --- | --- | --- |
 | Allard | Adrien | [The-Leyn](https://github.com/The-Leyn) |
-| Dupuis | Anatole | [Pseudo](https://github.com/Anatole2) |
-| Da Rocha | Hugo | [Pseudo](https://github.com/Hugodrc55) |
-| Ben Chabane | Aryles | [Pseudo](https://github.com/Aryles27) |
+| Dupuis | Anatole | [Anatole2](https://github.com/Anatole2) |
+| Da Rocha | Hugo | [Hugodrc55](https://github.com/Hugodrc55) |
+| Ben Chabane | Aryles | [Aryles27](https://github.com/Aryles27) |
 
