@@ -1,0 +1,36 @@
+# Composer
+/vendor/
+composer.lock
+
+# PHPUnit
+.phpunit.result.cache
+/coverage/
+/phpunit.xml
+.phpunit.cache/
+
+# Twig cache
+/cache/
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+/logs/
+
+# Environment
+.env
+.env.local
+
+# Docker volumes
+/mysql-data/

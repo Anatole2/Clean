@@ -1,0 +1,61 @@
+services:
+  # Service PHP avec Apache
+  php:
+    build: .
+    container_name: ${PROJECT_NAME}_php
+    ports:
+      - "${APP_PORT}:80"
+    volumes:
+      - ./:/var/www/html
+    environment:
+      # Variables utilisées par l'application PHP pour se connecter à MySQL
+      MYSQL_HOST: mysql
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    depends_on:
+      - mysql
+    networks:
+      - app-network
+
+  # Service MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: ${PROJECT_NAME}_mysql
+    # Optionnel: Exposer le port pour l'accès local si besoin, sinon on peut laisser Docker gérer
+    ports:
+      - "${MYSQL_PORT}:3306"
+    environment:
+      # Variables de configuration interne de MySQL (création de l'utilisateur/BDD)
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - app-network
+
+  # Service phpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: ${PROJECT_NAME}_pma
+    ports:
+      - "${PMA_PORT}:80"
+    environment:
+      # Configuration de l'hôte PMA pour se connecter au service 'mysql'
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      # Utilise le mot de passe root pour l'accès initial
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    depends_on:
+      - mysql
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
