@@ -14,7 +14,7 @@ Ce projet est conteneurisé avec **Docker**. Vous n'avez pas besoin d'installer 
 
    ```bash
    git clone https://github.com/Anatole2/Clean/
-   cd MyWeeklyAllowance
+   cd Clean
    ```
 
 2. **Configurer l'environnement**
@@ -37,10 +37,6 @@ Ce projet est conteneurisé avec **Docker**. Vous n'avez pas besoin d'installer 
    ```bash
    docker exec sharedParking_php composer install
    ```
-
-5. **Initialiser la base de données 💾**
-
-Accédez à http://localhost:8081 (PhpMyAdmin). Connectez-vous avec l'utilisateur root et le mot de passe défini dans .env. Sélectionnez la base de données myweeklyallowance et utilisez l'onglet "Importer" pour charger le fichier SQL du projet qui se trouve dans le dossier `Database/myweeklyallowanceDatabase.sql`.
 
 ### 🌍 Accès à l'application
 
