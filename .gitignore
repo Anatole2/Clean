@@ -34,3 +34,6 @@ Thumbs.db
 
 # Docker volumes
 /mysql-data/
+
+#Agent files
+AGENTS.md
