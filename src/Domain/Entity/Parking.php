@@ -7,10 +7,14 @@ namespace App\Domain\Entity;
 use App\Domain\ValueObject\GpsCoordinates;
 use App\Domain\ValueObject\PriceGrid;
 use App\Domain\ValueObject\WeeklySchedule;
+use App\Domain\ValueObject\SubscriptionPlan;
 use DateTimeImmutable;
 
 class Parking
 {
+  /** @var SubscriptionPlan[] */
+  private array $subscriptionPlans;
+
   public function __construct(
     private string $id,
     private string $ownerId,
@@ -18,8 +22,11 @@ class Parking
     private GpsCoordinates $coordinates,
     private int $totalPlaces,
     private PriceGrid $priceGrid,
-    private WeeklySchedule $openingHours
-  ) {}
+    private WeeklySchedule $openingHours,
+    array $subscriptionPlans = []
+  ) {
+    $this->subscriptionPlans = $subscriptionPlans;
+  }
 
   // --- Logique Métier (Délégation aux Value Objects) ---
 
@@ -76,5 +83,16 @@ class Parking
   public function changeOpeningHours(WeeklySchedule $newSchedule): void
   {
     $this->openingHours = $newSchedule;
+  }
+  /** @return SubscriptionPlan[] */
+  public function getSubscriptionPlans(): array
+  {
+    return $this->subscriptionPlans;
+  }
+
+  public function addSubscriptionPlan(SubscriptionPlan $plan): void
+  {
+    // Optionnel : Tu pourrais vérifier ici si un plan du même nom existe déjà
+    $this->subscriptionPlans[] = $plan;
   }
 }

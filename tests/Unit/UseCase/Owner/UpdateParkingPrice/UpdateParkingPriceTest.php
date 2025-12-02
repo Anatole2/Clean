@@ -45,12 +45,14 @@ class UpdateParkingPriceTest extends TestCase
         return $p->calculatePrice(60) === 200;
       }));
 
+    /** @var ParkingRepositoryInterface&\PHPUnit\Framework\MockObject\MockObject $repoMock */
     // La requête avec le nouveau tarif (2€)
     $request = new UpdateParkingPriceRequest(
       parkingId: 'uuid-123',
       ownerId: 'owner-correct',
       newPriceGridConfig: [60 => 200]
     );
+
 
     // 2. ACTION
     $useCase = new UpdateParkingPrice($repoMock);
@@ -67,6 +69,7 @@ class UpdateParkingPriceTest extends TestCase
     $repoMock = $this->createMock(ParkingRepositoryInterface::class);
     $repoMock->method('findById')->willReturn(null);
 
+    /** @var ParkingRepositoryInterface&\PHPUnit\Framework\MockObject\MockObject $repoMock */
     // 2. On s'attend à une erreur
     $this->expectException(Exception::class);
     $this->expectExceptionMessage("Parking introuvable");
@@ -91,7 +94,7 @@ class UpdateParkingPriceTest extends TestCase
 
     $repoMock = $this->createMock(ParkingRepositoryInterface::class);
     $repoMock->method('findById')->willReturn($parking);
-
+    /** @var ParkingRepositoryInterface&\PHPUnit\Framework\MockObject\MockObject $repoMock */
     // 2. Une requête faite par "owner-B" (le pirate)
     $request = new UpdateParkingPriceRequest(
       parkingId: 'id',

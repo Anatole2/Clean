@@ -9,6 +9,7 @@ use App\Domain\Repository\ParkingRepositoryInterface;
 use App\Domain\ValueObject\GpsCoordinates;
 use App\Domain\ValueObject\PriceGrid;
 use App\Domain\ValueObject\WeeklySchedule;
+use App\Domain\ValueObject\SubscriptionPlan;
 use PDO;
 use Exception;
 
@@ -20,18 +21,24 @@ class SqlParkingRepository implements ParkingRepositoryInterface
 
   public function save(Parking $parking): void
   {
-    // Utilisation de "INSERT ... ON DUPLICATE KEY UPDATE" pour gérer 
-    // la Création ET la Modification en une seule requête MySQL.
+    // Regarde bien le nombre de paramètres ci-dessous
     $sql = "
-            INSERT INTO parkings (id, owner_id, name, latitude, longitude, total_places, price_grid, opening_hours)
-            VALUES (:id, :owner_id, :name, :lat, :lon, :total, :prices, :hours)
+            INSERT INTO parkings (
+                id, owner_id, name, latitude, longitude, total_places, 
+                price_grid, opening_hours, subscription_plans
+            )
+            VALUES (
+                :id, :owner_id, :name, :lat, :lon, :total, 
+                :prices, :hours, :plans  
+            )
             ON DUPLICATE KEY UPDATE
                 name = VALUES(name),
                 latitude = VALUES(latitude),
                 longitude = VALUES(longitude),
                 total_places = VALUES(total_places),
                 price_grid = VALUES(price_grid),
-                opening_hours = VALUES(opening_hours)
+                opening_hours = VALUES(opening_hours),
+                subscription_plans = VALUES(subscription_plans)
         ";
 
     $stmt = $this->pdo->prepare($sql);
@@ -43,9 +50,14 @@ class SqlParkingRepository implements ParkingRepositoryInterface
       'lat'      => $parking->getCoordinates()->getLatitude(),
       'lon'      => $parking->getCoordinates()->getLongitude(),
       'total'    => $parking->getTotalPlaces(),
-      // Transformation des VO en JSON String
       'prices'   => json_encode($parking->getPriceGrid()->toArray()),
       'hours'    => json_encode($parking->getOpeningHours()->toArray()),
+
+      // Le jeton :plans correspond à cette ligne
+      'plans'    => json_encode(array_map(
+        fn($plan) => $plan->toArray(),
+        $parking->getSubscriptionPlans()
+      ))
     ]);
   }
 
@@ -84,16 +96,27 @@ class SqlParkingRepository implements ParkingRepositoryInterface
   // Méthode helper pour éviter la duplication de code si tu ajoutes findAll()
   private function mapRowToEntity(array $row): Parking
   {
+    // 1. Décodage du JSON
+    $rawPlans = json_decode($row['subscription_plans'] ?? '[]', true) ?: [];
+
+    // 2. Reconstruction des objets
+    $plans = array_map(function (array $data) {
+      return new SubscriptionPlan(
+        $data['name'],
+        (int)$data['price'],
+        new WeeklySchedule($data['rule'])
+      );
+    }, $rawPlans);
+
     return new Parking(
       $row['id'],
       $row['owner_id'],
       $row['name'],
-      // PDO renvoie souvent des strings, on caste en float
       new GpsCoordinates((float)$row['latitude'], (float)$row['longitude']),
       (int)$row['total_places'],
-      // Décodage du JSON en Array PHP (true)
       new PriceGrid(json_decode($row['price_grid'], true)),
-      new WeeklySchedule(json_decode($row['opening_hours'], true))
+      new WeeklySchedule(json_decode($row['opening_hours'], true)),
+      $plans
     );
   }
   public function findByOwnerId(string $ownerId): array

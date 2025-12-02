@@ -39,6 +39,7 @@ class UpdateParkingHoursTest extends TestCase
     $repoMock = $this->createMock(ParkingRepositoryInterface::class);
     $repoMock->method('findById')->willReturn($existingParking);
 
+    /** @var ParkingRepositoryInterface&\PHPUnit\Framework\MockObject\MockObject $repoMock */
     // CRITIQUE : On vérifie que la méthode save est appelée avec un parking
     // dont les horaires correspondent bien à la nouvelle config
     $repoMock->expects($this->once())
@@ -70,11 +71,11 @@ class UpdateParkingHoursTest extends TestCase
     // 1. Le repository ne trouve rien
     $repoMock = $this->createMock(ParkingRepositoryInterface::class);
     $repoMock->method('findById')->willReturn(null);
+    /** @var ParkingRepositoryInterface&\PHPUnit\Framework\MockObject\MockObject $repoMock */
 
     // 2. On s'attend à une erreur
     $this->expectException(Exception::class);
     $this->expectExceptionMessage("Parking introuvable");
-
     // 3. Exécution
     $useCase = new UpdateParkingHours($repoMock);
     $useCase->execute(new UpdateParkingHoursRequest('bad-id', 'owner', []));
@@ -95,6 +96,7 @@ class UpdateParkingHoursTest extends TestCase
 
     $repoMock = $this->createMock(ParkingRepositoryInterface::class);
     $repoMock->method('findById')->willReturn($parking);
+    /** @var ParkingRepositoryInterface&\PHPUnit\Framework\MockObject\MockObject $repoMock */
 
     // 2. La requête est faite par owner-B (PIRATE)
     $request = new UpdateParkingHoursRequest(

@@ -173,4 +173,33 @@ class SqlParkingRepositoryTest extends IntegrationTestCase
     $this->assertNotEmpty($results);
     $this->assertInstanceOf(Parking::class, $results[0]);
   }
+  public function testItSavesAndRetrievesSubscriptionPlans(): void
+  {
+    // 1. Création d'un plan "Nuit"
+    $nightRule = new WeeklySchedule([['startDay' => 1, 'startTime' => '18:00', 'endDay' => 2, 'endTime' => '08:00']]);
+    $plan = new \App\Domain\ValueObject\SubscriptionPlan("Forfait Nuit", 5000, $nightRule);
+
+    // 2. Création du parking avec ce plan
+    $parking = new Parking(
+      'uuid-plan-test',
+      'owner-1',
+      'Parking Plans',
+      new GpsCoordinates(0, 0),
+      10,
+      new PriceGrid([60 => 1]),
+      new WeeklySchedule([]),
+      [$plan] // 👈 On injecte le plan
+    );
+
+    // 3. Sauvegarde
+    $this->repo->save($parking);
+
+    // 4. Récupération
+    $saved = $this->repo->findById('uuid-plan-test');
+
+    // 5. Vérifications
+    $this->assertCount(1, $saved->getSubscriptionPlans());
+    $this->assertEquals("Forfait Nuit", $saved->getSubscriptionPlans()[0]->getName());
+    $this->assertEquals(5000, $saved->getSubscriptionPlans()[0]->getMonthlyPrice());
+  }
 }

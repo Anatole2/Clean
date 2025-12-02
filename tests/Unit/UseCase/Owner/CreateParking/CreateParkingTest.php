@@ -21,12 +21,16 @@ class CreateParkingTest extends TestCase
     $idGenerator = $this->createMock(IdGeneratorInterface::class);
     $idGenerator->method('generate')->willReturn('uuid-1234');
 
+
     // B. On mocke le Repository
     // "Je veux vérifier qu'on appelle bien ta méthode 'save' une fois"
     $repository = $this->createMock(ParkingRepositoryInterface::class);
     $repository->expects($this->once())
       ->method('save')
       ->with($this->isInstanceOf(Parking::class));
+
+    /** @var ParkingRepositoryInterface&\PHPUnit\Framework\MockObject\MockObject $repository */
+    /** @var IdGeneratorInterface&\PHPUnit\Framework\MockObject\MockObject $idGenerator */
 
     // C. On prépare la requête (DTO d'entrée)
     $request = new CreateParkingRequest(
