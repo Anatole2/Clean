@@ -69,4 +69,8 @@ class Parking
   {
     return $this->openingHours;
   }
+  public function changePriceGrid(PriceGrid $newGrid): void
+  {
+    $this->priceGrid = $newGrid;
+  }
 }

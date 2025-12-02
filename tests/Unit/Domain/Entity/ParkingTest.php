@@ -48,4 +48,36 @@ class ParkingTest extends TestCase
     $this->assertTrue($parking->isOpen(new DateTimeImmutable('Monday 10:00')));
     $this->assertFalse($parking->isOpen(new DateTimeImmutable('Sunday 10:00')));
   }
+  public function testItCanChangePriceGrid(): void
+  {
+    // 1. ARRANGEMENT
+    // On crée un parking avec un tarif initial (1h = 10€)
+    $initialGrid = new PriceGrid([60 => 1000]);
+
+    $parking = new Parking(
+      'id',
+      'owner',
+      'Name',
+      new GpsCoordinates(0, 0),
+      10,
+      $initialGrid, // <--- Ancien prix
+      new WeeklySchedule([])
+    );
+
+    // Vérification pré-condition
+    $this->assertSame($initialGrid, $parking->getPriceGrid());
+    $this->assertEquals(1000, $parking->calculatePrice(60));
+
+    // 2. ACTION
+    // Le propriétaire décide de baisser le prix (1h = 5€)
+    $newGrid = new PriceGrid([60 => 500]);
+    $parking->changePriceGrid($newGrid);
+
+    // 3. ASSERTION
+    // On vérifie que l'objet a bien changé en mémoire
+    $this->assertSame($newGrid, $parking->getPriceGrid());
+
+    // On vérifie que le calcul du prix utilise bien la nouvelle grille
+    $this->assertEquals(500, $parking->calculatePrice(60));
+  }
 }
