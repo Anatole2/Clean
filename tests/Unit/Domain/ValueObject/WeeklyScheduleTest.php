@@ -71,11 +71,8 @@ class WeeklyScheduleTest extends TestCase
     $schedule = new WeeklySchedule([]);
     $this->assertTrue($schedule->isOpen(new DateTimeImmutable('now')));
   }
-  public function testToArrayReturnsCalculatedSlots(): void
+  public function testToArrayReturnsOriginalConfig(): void
   {
-    // Lundi (1) de 08:00 à 12:00
-    // Lundi 00:00 = 0 min. Donc 08:00 = 8 * 60 = 480 min.
-    // 12:00 = 12 * 60 = 720 min.
     $config = [
       ['startDay' => 1, 'startTime' => '08:00', 'endDay' => 1, 'endTime' => '12:00']
     ];
@@ -83,9 +80,9 @@ class WeeklyScheduleTest extends TestCase
     $schedule = new WeeklySchedule($config);
     $result = $schedule->toArray();
 
-    $this->assertCount(1, $result);
-    $this->assertEquals(480, $result[0]['start']);
-    $this->assertEquals(720, $result[0]['end']);
+    // On ne vérifie plus 480/720, mais que l'objet nous rend ce qu'on lui a donné
+    $this->assertSame($config, $result);
+    $this->assertEquals('08:00', $result[0]['startTime']);
   }
   public function testThrowsExceptionForInvalidDay(): void
   {
@@ -98,5 +95,24 @@ class WeeklyScheduleTest extends TestCase
     $this->expectExceptionMessage("Le jour doit être entre 1 (Lundi) et 7 (Dimanche)");
 
     new WeeklySchedule($invalidConfig);
+  }
+  public function testConstructorIgnoresMalformedConfig(): void
+  {
+    // 1. On prépare une config incomplète (il manque 'endTime')
+    $malformedConfig = [
+      ['startDay' => 1, 'startTime' => '08:00', 'endDay' => 1]
+    ];
+
+    // 2. On instancie (ne doit pas planter)
+    $schedule = new WeeklySchedule($malformedConfig);
+
+    // 3. Vérifications
+    // Le toArray doit nous rendre la config brute (même cassée, c'est ce qu'on a stocké)
+    $this->assertSame($malformedConfig, $schedule->toArray());
+
+    // Comme la ligne était mal formée, elle a été ignorée par le "continue".
+    // Donc aucun créneau n'a été ajouté mathématiquement.
+    // Selon notre logique "si vide = ouvert tout le temps", cela devrait être ouvert.
+    $this->assertTrue($schedule->isOpen(new \DateTimeImmutable('now')));
   }
 }

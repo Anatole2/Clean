@@ -1,0 +1,150 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Infrastructure\repository;
+
+use App\Domain\Entity\Parking;
+use App\Domain\Repository\ParkingRepositoryInterface;
+use App\Domain\ValueObject\GpsCoordinates;
+use App\Domain\ValueObject\PriceGrid;
+use App\Domain\ValueObject\WeeklySchedule;
+use PDO;
+use Exception;
+
+class SqlParkingRepository implements ParkingRepositoryInterface
+{
+  public function __construct(
+    private PDO $pdo
+  ) {}
+
+  public function save(Parking $parking): void
+  {
+    // Utilisation de "INSERT ... ON DUPLICATE KEY UPDATE" pour gérer 
+    // la Création ET la Modification en une seule requête MySQL.
+    $sql = "
+            INSERT INTO parkings (id, owner_id, name, latitude, longitude, total_places, price_grid, opening_hours)
+            VALUES (:id, :owner_id, :name, :lat, :lon, :total, :prices, :hours)
+            ON DUPLICATE KEY UPDATE
+                name = VALUES(name),
+                latitude = VALUES(latitude),
+                longitude = VALUES(longitude),
+                total_places = VALUES(total_places),
+                price_grid = VALUES(price_grid),
+                opening_hours = VALUES(opening_hours)
+        ";
+
+    $stmt = $this->pdo->prepare($sql);
+
+    $stmt->execute([
+      'id'       => $parking->getId(),
+      'owner_id' => $parking->getOwnerId(),
+      'name'     => $parking->getName(),
+      'lat'      => $parking->getCoordinates()->getLatitude(),
+      'lon'      => $parking->getCoordinates()->getLongitude(),
+      'total'    => $parking->getTotalPlaces(),
+      // Transformation des VO en JSON String
+      'prices'   => json_encode($parking->getPriceGrid()->toArray()),
+      'hours'    => json_encode($parking->getOpeningHours()->toArray()),
+    ]);
+  }
+
+  public function findById(string $id): ?Parking
+  {
+    $stmt = $this->pdo->prepare("SELECT * FROM parkings WHERE id = :id LIMIT 1");
+    $stmt->execute(['id' => $id]);
+
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$row) {
+      return null;
+    }
+
+    return $this->mapRowToEntity($row);
+  }
+  public function delete(string $id): void
+  {
+    $stmt = $this->pdo->prepare("DELETE FROM parkings WHERE id = :id");
+    $stmt->execute(['id' => $id]);
+  }
+
+  public function findAll(): array
+  {
+    $stmt = $this->pdo->query("SELECT * FROM parkings");
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $parkings = [];
+    foreach ($rows as $row) {
+      // On réutilise la logique de mapping pour chaque ligne
+      $parkings[] = $this->mapRowToEntity($row);
+    }
+
+    return $parkings;
+  }
+  // Méthode helper pour éviter la duplication de code si tu ajoutes findAll()
+  private function mapRowToEntity(array $row): Parking
+  {
+    return new Parking(
+      $row['id'],
+      $row['owner_id'],
+      $row['name'],
+      // PDO renvoie souvent des strings, on caste en float
+      new GpsCoordinates((float)$row['latitude'], (float)$row['longitude']),
+      (int)$row['total_places'],
+      // Décodage du JSON en Array PHP (true)
+      new PriceGrid(json_decode($row['price_grid'], true)),
+      new WeeklySchedule(json_decode($row['opening_hours'], true))
+    );
+  }
+  public function findByOwnerId(string $ownerId): array
+  {
+    $stmt = $this->pdo->prepare("SELECT * FROM parkings WHERE owner_id = :owner_id");
+    $stmt->execute(['owner_id' => $ownerId]);
+
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $parkings = [];
+    foreach ($rows as $row) {
+      $parkings[] = $this->mapRowToEntity($row);
+    }
+
+    return $parkings;
+  }
+  public function findNearby(GpsCoordinates $center, float $radiusInKm): array
+  {
+    throw new Exception("TODO");
+  }
+  // La fonction findNearby() utilisant la formule de Haversine est commentée ci-dessous.
+  /* public function findNearby(GpsCoordinates $center, float $radiusInKm): array */
+  /*     { */
+  /*         // Formule de Haversine pour calculer la distance en km directement en SQL */
+  /*         // 6371 est le rayon de la Terre en km */
+  /*         $sql = " */
+  /*             SELECT *,  */
+  /*             (6371 * acos( */
+  /*                 cos(radians(:lat)) * cos(radians(latitude)) * cos(radians(longitude) - radians(:lon))  */
+  /*                 + sin(radians(:lat)) * sin(radians(latitude)) */
+  /*             )) AS distance  */
+  /*             FROM parkings  */
+  /*             HAVING distance < :radius  */
+  /*             ORDER BY distance ASC */
+  /*         "; */
+  /**/
+  /*         $stmt = $this->pdo->prepare($sql); */
+  /*         $stmt->execute([ */
+  /*             'lat' => $center->getLatitude(), */
+  /*             'lon' => $center->getLongitude(), */
+  /*             'radius' => $radiusInKm */
+  /*         ]); */
+  /**/
+  /*         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC); */
+  /**/
+  /*         $parkings = []; */
+  /*         foreach ($rows as $row) { */
+  /*             $parkings[] = $this->mapRowToEntity($row); */
+  /*         } */
+  /**/
+  /*         return $parkings; */
+  /*     } */
+  // TODO: Implémenter delete(), findAll(), etc. selon l'interface définie
+}
