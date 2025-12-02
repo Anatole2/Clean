@@ -80,4 +80,25 @@ class ParkingTest extends TestCase
     // On vérifie que le calcul du prix utilise bien la nouvelle grille
     $this->assertEquals(500, $parking->calculatePrice(60));
   }
+  public function testItCanChangeOpeningHours(): void
+  {
+    $parking = new Parking(
+      'id',
+      'owner',
+      'Name',
+      new GpsCoordinates(0, 0),
+      10,
+      new PriceGrid([60 => 1]),
+      new WeeklySchedule([]) // Initialement vide (ouvert 24/7)
+    );
+
+    // Nouvelle règle : Fermé le dimanche
+    $newSchedule = new WeeklySchedule([
+      ['startDay' => 1, 'startTime' => '08:00', 'endDay' => 1, 'endTime' => '18:00']
+    ]);
+
+    $parking->changeOpeningHours($newSchedule);
+
+    $this->assertSame($newSchedule, $parking->getOpeningHours());
+  }
 }
