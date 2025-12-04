@@ -1,0 +1,28 @@
+<?php
+
+namespace App\Application\UseCase;
+
+use App\Domain\Repository\ParkingRepositoryInterface;
+// besoin de l'algorithme de disponibilité de la Personne 4
+
+class SearchParking
+{
+    private ParkingRepositoryInterface $parkingRepository;
+
+    public function __construct(ParkingRepositoryInterface $parkingRepository)
+    {
+        // Le Use Case dépend de l'interface, PAS d'une implémentation MySQL.
+        $this->parkingRepository = $parkingRepository;
+    }
+
+    public function execute(float $lat, float $lon, ?\DateTimeImmutable $start, ?\DateTimeImmutable $end): array
+    {
+        // 1. Utilisez le contrat pour récupérer les parkings
+        $parkings = $this->parkingRepository->findAvailableNearGps($lat, $lon, $start, $end);
+
+        // 2. Logique métier : Affiner les résultats (ex: appeler l'algo de disponibilité de P4)
+        // ...
+
+        return $parkings;
+    }
+}
