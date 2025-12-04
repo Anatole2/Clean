@@ -19,7 +19,18 @@ abstract class Account
         $this->lastName = $lastName;
     }
 
-    public function getId(): int
+    /**
+     * Méthode de fabrique statique utilisée par le Repository pour RECONSTRUIRE l'entité
+     * à partir des données persistées (le mot de passe est déjà haché).
+     */
+    public static function reconstitute(string $id, string $email, string $passwordHash, string $firstName, string $lastName): Account
+    {
+        $instance = new static($id, $email, 'DUMMY_PASSWORD_DO_NOT_USE', $firstName, $lastName);
+        $instance->passwordHash = $passwordHash;
+        return $instance;
+    }
+
+    public function getId(): string
     {
         return $this->id;
     }
