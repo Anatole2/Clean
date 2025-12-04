@@ -1,9 +1,9 @@
 <?php
 
-namespace Tests\Unit\UseCase;
+namespace Tests\Unit\UseCase\Account;
 
 use PHPUnit\Framework\TestCase;
-use App\UseCase\Register\RegisterAccount;
+use App\UseCase\Account\RegisterAccount;
 use App\Domain\Entity\Account;
 use App\Domain\Entity\User;
 use App\Domain\Entity\Owner;

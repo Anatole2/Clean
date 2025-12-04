@@ -1,6 +1,6 @@
 <?php
 
-namespace App\UseCase\Register;
+namespace App\UseCase\Account;
 
 use App\Domain\Entity\User;
 use App\Domain\Entity\Owner;

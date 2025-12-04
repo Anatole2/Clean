@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Adapter\Security;
+namespace App\Infrastructure\Security;
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
