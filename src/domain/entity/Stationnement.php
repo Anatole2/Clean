@@ -3,7 +3,7 @@
 namespace App\Domain\Entity;
 
 use DateTimeImmutable;
-use App\domain\ValueObject\Money; 
+use App\Domain\ValueObject\Money; 
 
 class Stationnement
 {
