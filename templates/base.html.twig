@@ -1,0 +1,52 @@
+{# templates/base.html.twig #}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Parking App{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <style>
+        main.container { padding-top: 2rem; }
+        nav { border-bottom: 1px solid #eee; padding-bottom: 1rem; }
+    </style>
+</head>
+<body>
+
+    <nav class="container-fluid">
+        <ul>
+            <li><strong>🅿️ Parking App</strong></li>
+        </ul>
+        <ul>
+            {# CAS 1 : L'utilisateur n'est PAS connecté #}
+            {% if user is null %}
+                <li><a href="/login">Se connecter</a></li>
+                <li><a href="/register" role="button">Créer un compte</a></li>
+
+            {# CAS 2 : L'utilisateur EST connecté #}
+            {% else %}
+                <li>Bonjour, {{ user.email }}</li>
+
+                {# Menu spécifique PROPRIÉTAIRE #}
+                {% if user.role == 'OWNER' %}
+                    <li><a href="/dashboard">Mes Parkings</a></li>
+                    <li><a href="/parkings/new">Ajouter un parking</a></li>
+                {% endif %}
+
+                {# Menu spécifique CONDUCTEUR (USER) #}
+                {% if user.role == 'USER' %}
+                    <li><a href="/search">Trouver une place</a></li>
+                    <li><a href="/reservations">Mes Réservations</a></li>
+                {% endif %}
+
+                <li><a href="/logout" role="button" class="secondary outline">Déconnexion</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <main class="container">
+        {% block body %}{% endblock %}
+    </main>
+
+</body>
+</html>

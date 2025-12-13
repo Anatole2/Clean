@@ -1,0 +1,14 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Erreur {{ code }}{% endblock %}
+
+{% block body %}
+    <article style="border-left: 5px solid #d93526; padding-left: 1rem;">
+        <hgroup>
+            <h1>Oups ! Une erreur est survenue</h1>
+            <h2>Code erreur : {{ code }}</h2>
+        </hgroup>
+        
+        <p>{{ message }}</p>
+    </article>
+{% endblock %}

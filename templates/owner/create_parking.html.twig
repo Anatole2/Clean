@@ -1,0 +1,281 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Nouveau Parking{% endblock %}
+
+{% block body %}
+    <h1>Ajouter un nouveau parking</h1>
+
+    <form action="/parkings" method="POST" id="parkingForm" onsubmit="return prepareForm()">
+        
+        <fieldset>
+            <legend><strong>📍 Informations Générales</strong></legend>
+            <div class="grid">
+                <label>
+                    Nom du parking
+                    <input type="text" name="name" placeholder="Ex: Gare Montparnasse" required>
+                </label>
+                <label>
+                    Nombre de places
+                    <input type="number" name="totalPlaces" placeholder="150" required>
+                </label>
+            </div>
+            <div class="grid">
+                <label>Latitude <input type="text" name="latitude" value="48.85"></label>
+                <label>Longitude <input type="text" name="longitude" value="2.35"></label>
+            </div>
+        </fieldset>
+
+        <hr>
+
+        <fieldset>
+            <legend><strong>🕒 Horaires d'ouverture</strong></legend>
+            <p class="help-text"><small>Ajoutez autant de plages horaires que nécessaire (ex: matin et après-midi).</small></p>
+
+            <div class="grid">
+                <label>
+                    Jour
+                    <select id="timeDay">
+                        <option value="1">Lundi</option>
+                        <option value="2">Mardi</option>
+                        <option value="3">Mercredi</option>
+                        <option value="4">Jeudi</option>
+                        <option value="5">Vendredi</option>
+                        <option value="6">Samedi</option>
+                        <option value="7">Dimanche</option>
+                    </select>
+                </label>
+
+                <label>
+                    Ouverture
+                    <input type="time" id="timeStart" value="08:00">
+                </label>
+
+                <label>
+                    Fermeture
+                    <input type="time" id="timeEnd" value="12:00">
+                </label>
+
+                <label>
+                    Action
+                    <button type="button" onclick="addTimeSlot()" class="secondary" style="margin-top: 5px;">Ajouter</button>
+                </label>
+            </div>
+
+            <table role="grid" style="margin-top: 20px;">
+                <thead>
+                    <tr>
+                        <th>Jour</th>
+                        <th>Horaire</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="timeSlotsListBody">
+                    </tbody>
+            </table>
+
+            <div id="hiddenHoursContainer"></div>
+        </fieldset>
+
+        <hr>
+
+        <fieldset>
+            <legend><strong>💰 Grille Tarifaire</strong></legend>
+            <div class="grid">
+                <div>
+                    <label>Durée (minutes)</label>
+                    <input type="number" id="newDuration" placeholder="ex: 60" min="15" step="15">
+                </div>
+                <div>
+                    <label>Prix (€)</label>
+                    <input type="number" id="newPrice" placeholder="ex: 2.50" min="0" step="0.10">
+                </div>
+                <div style="display: flex; align-items: flex-end;">
+                    <button type="button" onclick="addPrice()" class="secondary" style="margin-bottom: 20px;">➕ Ajouter</button>
+                </div>
+            </div>
+
+            <table role="grid">
+                <thead>
+                    <tr>
+                        <th>Durée</th>
+                        <th>Prix</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="priceListBody"></tbody>
+            </table>
+            
+            <div id="hiddenPricesContainer"></div>
+        </fieldset>
+
+        <button type="submit">Enregistrer le parking</button>
+    </form>
+
+    <script>
+        // --- VARIABLES GLOBALES ---
+        // On stocke les horaires en mémoire JS pour pouvoir les gérer facilement
+        let timeSlots = []; 
+        const dayNames = {1: 'Lundi', 2: 'Mardi', 3: 'Mercredi', 4: 'Jeudi', 5: 'Vendredi', 6: 'Samedi', 7: 'Dimanche'};
+
+        // --- GESTION DES HORAIRES (NOUVEAU) ---
+
+        function addTimeSlot() {
+            const daySelect = document.getElementById('timeDay');
+            const startInput = document.getElementById('timeStart');
+            const endInput = document.getElementById('timeEnd');
+
+            const dayVal = parseInt(daySelect.value);
+            const startVal = startInput.value;
+            const endVal = endInput.value;
+
+            if (!startVal || !endVal) {
+                alert("Veuillez définir une heure de début et de fin.");
+                return;
+            }
+
+            if (startVal >= endVal) {
+                alert("L'heure de fermeture doit être après l'ouverture !");
+                return;
+            }
+
+            // Ajout à notre liste JS
+            const newSlot = {
+                id: Date.now(), // ID unique pour suppression
+                day: dayVal,
+                start: startVal,
+                end: endVal
+            };
+            timeSlots.push(newSlot);
+
+            // On trie les créneaux par jour puis par heure (pour faire joli)
+            timeSlots.sort((a, b) => {
+                if (a.day !== b.day) return a.day - b.day;
+                return a.start.localeCompare(b.start);
+            });
+
+            renderTimeSlots();
+        }
+
+        function removeTimeSlot(id) {
+            timeSlots = timeSlots.filter(slot => slot.id !== id);
+            renderTimeSlots();
+        }
+
+        function renderTimeSlots() {
+            const tbody = document.getElementById('timeSlotsListBody');
+            tbody.innerHTML = '';
+
+            timeSlots.forEach(slot => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${dayNames[slot.day]}</strong></td>
+                    <td>${slot.start} à ${slot.end}</td>
+                    <td><a href="#" onclick="removeTimeSlot(${slot.id}); return false;" style="color: red;">Supprimer</a></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- GESTION DES PRIX ---
+
+        function addPrice(giveFocus = true) {
+            const durationInput = document.getElementById('newDuration');
+            const priceInput = document.getElementById('newPrice');
+            const duration = parseInt(durationInput.value);
+            const priceInEuros = parseFloat(priceInput.value);
+
+            if (!duration || isNaN(priceInEuros)) {
+                alert("Erreur de saisie prix/durée.");
+                return;
+            }
+
+            const priceInCents = Math.round(priceInEuros * 100);
+
+            // Visuel
+            const tbody = document.getElementById('priceListBody');
+            const tr = document.createElement('tr');
+            const hours = Math.floor(duration / 60);
+            const mins = duration % 60;
+            const readableTime = hours > 0 ? `${hours}h${mins > 0 ? mins : ''}` : `${mins} min`;
+
+            tr.innerHTML = `
+                <td>${duration} min <small>(${readableTime})</small></td>
+                <td><strong>${priceInEuros.toFixed(2)} €</strong></td>
+                <td><a href="#" onclick="this.closest('tr').remove(); removeHiddenInputPrice(${duration}); return false;" style="color: red;">Supprimer</a></td>
+            `;
+            tbody.appendChild(tr);
+
+            // Technique (Input caché)
+            const container = document.getElementById('hiddenPricesContainer');
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.id = `input_price_${duration}`;
+            input.name = `priceGridConfig[${duration}]`; 
+            input.value = priceInCents;
+            container.appendChild(input);
+
+            durationInput.value = '';
+            priceInput.value = '';
+            if (giveFocus) durationInput.focus();
+        }
+
+        function removeHiddenInputPrice(duration) {
+            const input = document.getElementById(`input_price_${duration}`);
+            if (input) input.remove();
+        }
+
+        // --- PREPARATION FORMULAIRE ---
+
+        function prepareForm() {
+            const hoursContainer = document.getElementById('hiddenHoursContainer');
+            hoursContainer.innerHTML = '';
+
+            // 1. Génération des inputs cachés pour les HORAIRES depuis notre tableau JS
+            if (timeSlots.length === 0) {
+                alert("Vous devez ajouter au moins un créneau horaire !");
+                return false;
+            }
+
+            timeSlots.forEach((slot, index) => {
+                createHiddenInput(hoursContainer, `openingHoursConfig[${index}][startDay]`, slot.day);
+                createHiddenInput(hoursContainer, `openingHoursConfig[${index}][startTime]`, slot.start);
+                createHiddenInput(hoursContainer, `openingHoursConfig[${index}][endDay]`, slot.day);
+                createHiddenInput(hoursContainer, `openingHoursConfig[${index}][endTime]`, slot.end);
+            });
+
+            // 2. Vérification des PRIX
+            if (document.getElementById('hiddenPricesContainer').children.length === 0) {
+                 // Prix de secours pour pas planter
+                 const input = document.createElement('input');
+                 input.type = 'hidden';
+                 input.name = `priceGridConfig[60]`;
+                 input.value = '1000'; // 10€ par défaut dissuasif
+                 document.getElementById('hiddenPricesContainer').appendChild(input);
+            }
+
+            return true;
+        }
+
+        function createHiddenInput(container, name, value) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value;
+            container.appendChild(input);
+        }
+
+        // --- CHARGEMENT ---
+        window.onload = function() {
+            // Initialisation Prix
+            document.getElementById('newDuration').value = "60";
+            document.getElementById('newPrice').value = "2.00";
+            addPrice(false);
+
+            // Initialisation Horaires (Exemple: Lundi 8h-18h)
+            document.getElementById('timeDay').value = "1"; // Lundi
+            document.getElementById('timeStart').value = "08:00";
+            document.getElementById('timeEnd').value = "18:00";
+            addTimeSlot(); // On ajoute un créneau par défaut
+        };
+    </script>
+{% endblock %}

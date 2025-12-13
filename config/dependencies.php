@@ -4,9 +4,12 @@ use App\Infrastructure\Repository\SqlParkingRepository;
 use App\Infrastructure\Service\RamseyIdGenerator;
 use App\Infrastructure\Controller\Owner\CreateParkingController;
 use App\Infrastructure\Presenter\PresenterFactory;
+use App\Infrastructure\Controller\Owner\ShowCreateParkingFormController;
 use App\Infrastructure\Middleware\AuthMiddleware;
 use App\Infrastructure\Security\JwtService;
 use App\UseCase\Owner\CreateParking\CreateParking;
+use Twig\Loader\FilesystemLoader;
+use Twig\Environment;
 use App\UseCase\Owner\UpdateParkingPrice\UpdateParkingPrice;
 use App\UseCase\Owner\UpdateParkingHours\UpdateParkingHours;
 use App\UseCase\Owner\AddParkingSubscriptionPlan\AddParkingSubscriptionPlan;
@@ -28,7 +31,7 @@ $c[PDO::class] = function () {
 // --- 2. Services Infra ---
 $c[SqlParkingRepository::class] = fn($c) => new SqlParkingRepository($c[PDO::class]());
 $c[RamseyIdGenerator::class]    = fn() => new RamseyIdGenerator();
-$c[PresenterFactory::class]     = fn() => new PresenterFactory();
+$c[PresenterFactory::class] = fn($c) => new PresenterFactory($c[Environment::class]($c));
 
 // --- 3. SÉCURITÉ (LA CORRECTION EST ICI) ---
 
@@ -88,5 +91,37 @@ $c[CreateParkingController::class] = function ($c) {
     $c[PresenterFactory::class]($c)  // Et ici !
   );
 };
+$c[ShowCreateParkingFormController::class] = fn($c) => new ShowCreateParkingFormController(
+  $c[Environment::class]($c)
+);
+// Configuration de Twig
+$c[Environment::class] = function ($c) {
+  // 1. Charger Twig
+  $loader = new FilesystemLoader(__DIR__ . '/../templates');
+  $twig = new Environment($loader, [
+    'cache' => false,
+    'debug' => true,
+  ]);
 
+  // 2. RECUPERER L'UTILISATEUR DEPUIS LE COOKIE (Si présent)
+  $user = null;
+  if (isset($_COOKIE['auth_token'])) {
+    try {
+      // On utilise ton JwtService pour décoder le token du cookie
+      $jwtService = $c[JwtService::class](); // On récupère l'instance
+      $user = $jwtService->decodeToken($_COOKIE['auth_token']);
+
+      // On transforme l'objet en tableau pour Twig (plus simple)
+      $user = (array) $user;
+    } catch (\Exception $e) {
+      // Si le token est invalide/expiré, on ignore (user reste null)
+    }
+  }
+
+  // 3. INJECTER LA VARIABLE GLOBALE 'user'
+  // Désormais, {{ user }} est disponible dans TOUS les templates
+  $twig->addGlobal('user', $user);
+
+  return $twig;
+};
 return $c;

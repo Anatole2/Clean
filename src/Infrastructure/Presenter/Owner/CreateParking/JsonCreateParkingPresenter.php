@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\Presenter\CreateParking;
+namespace App\Infrastructure\Presenter\Owner\CreateParking;
 
 use App\Infrastructure\Presenter\PresenterInterface;
 use App\UseCase\Owner\CreateParking\CreateParkingResponse;
@@ -19,7 +19,7 @@ class JsonCreateParkingPresenter implements PresenterInterface
         'name' => $responseDTO->name,
         'totalPlaces' => $responseDTO->totalPlaces,
         'links' => [
-          'self' => "/api/parkings/{$responseDTO->id}"
+          'self' => "/parkings/{$responseDTO->id}"
         ]
       ]
     ]);
