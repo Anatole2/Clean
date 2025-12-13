@@ -202,4 +202,78 @@ class SqlParkingRepositoryTest extends IntegrationTestCase
     $this->assertEquals("Forfait Nuit", $saved->getSubscriptionPlans()[0]->getName());
     $this->assertEquals(5000, $saved->getSubscriptionPlans()[0]->getMonthlyPrice());
   }
+  public function testFindByOwnerIdReturnsOnlyMatchingParkings(): void
+  {
+    // On définit une grille de prix valide pour passer la validation du Value Object
+    // (ex: 60 minutes = 200 centimes)
+    $dummyPriceGrid = new PriceGrid([60 => 200]);
+
+    // On définit aussi un horaire vide ou simple (selon ton VO WeeklySchedule)
+    $dummySchedule = new WeeklySchedule([]);
+
+    // 1. On insère 3 parkings en base
+
+    // Parking A (Owner 1)
+    $parking1 = new Parking(
+      'p1',
+      'owner-1',
+      'Parking A',
+      new GpsCoordinates(48.0, 2.0),
+      100,
+      $dummyPriceGrid, // ✅ On passe une grille valide
+      $dummySchedule,
+      []
+    );
+    $this->repo->save($parking1);
+
+    // Parking B (Owner 1)
+    $parking2 = new Parking(
+      'p2',
+      'owner-1',
+      'Parking B',
+      new GpsCoordinates(48.1, 2.1),
+      200,
+      $dummyPriceGrid, // ✅ On passe une grille valide
+      $dummySchedule,
+      []
+    );
+    $this->repo->save($parking2);
+
+    // Parking C (Owner 2) -> Celui-ci ne doit PAS ressortir
+    $parking3 = new Parking(
+      'p3',
+      'owner-2',
+      'Parking Intruder',
+      new GpsCoordinates(49.0, 3.0),
+      50,
+      $dummyPriceGrid, // ✅ On passe une grille valide
+      $dummySchedule,
+      []
+    );
+    $this->repo->save($parking3);
+
+    // 2. On appelle la méthode à tester pour Owner 1
+    $results = $this->repo->findByOwnerId('owner-1');
+
+    // 3. Vérifications
+    $this->assertCount(2, $results);
+
+    // On vérifie que ce sont bien les bons parkings via leurs IDs
+    $ids = array_map(fn($p) => $p->getId(), $results);
+    $this->assertContains('p1', $ids);
+    $this->assertContains('p2', $ids);
+    $this->assertNotContains('p3', $ids); // Le parking de l'autre owner n'est pas là
+
+    // Petite vérification supplémentaire sur le nom
+    // (L'ordre n'est pas garanti en SQL sans ORDER BY, donc on vérifie juste que le nom existe)
+    $names = array_map(fn($p) => $p->getName(), $results);
+    $this->assertContains('Parking A', $names);
+    $this->assertContains('Parking B', $names);
+  }
+
+  public function testFindByOwnerIdReturnsEmptyIfNoneFound(): void
+  {
+    $results = $this->repo->findByOwnerId('unknown-owner');
+    $this->assertEmpty($results);
+  }
 }
