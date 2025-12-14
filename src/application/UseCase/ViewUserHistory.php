@@ -38,7 +38,7 @@ class ViewUserHistory
         $history = [
             'reservations' => $reservations,
             'subscriptions' => $subscriptions,
-            'parkings' => $stationnements, // Renommé 'parkings' ou 'stationnements' pour la clarté
+            'stationnements' => $stationnements, 
         ];
         
         // 3. Retourner le résultat pour la présentation (Couche Présentation/Controller)
