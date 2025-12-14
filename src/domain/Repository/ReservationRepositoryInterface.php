@@ -9,7 +9,9 @@ interface ReservationRepositoryInterface
 {
     public function findById(int $id): ?Reservation;
 
-
     public function findActiveForUser(string $userId, string $parkingId, DateTimeImmutable $atTime): ?Reservation;
+
+   
+    public function countOverlapping(string $parkingId, DateTimeImmutable $start, DateTimeImmutable $end): int;
 }
 
