@@ -23,7 +23,7 @@ class CreateParkingController extends AbstractController
 
     // 2. Récupération des données (VERSION ROBUSTE)
     // On récupère les données JSON potentielles
-    $jsonData = $this->getRequestData();
+    $input = $this->getRequestData();
 
 
     // --- NETTOYAGE / CASTING ---

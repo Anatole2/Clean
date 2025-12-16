@@ -21,6 +21,7 @@ use App\Infrastructure\Controller\Auth\RegisterOwnerController;
 use App\UseCase\Auth\RegisterOwner\RegisterOwner;
 use App\UseCase\Auth\Login\Login;
 use App\Infrastructure\Controller\Auth\LoginController;
+use App\Infrastructure\Controller\Auth\LogoutController;
 
 $c = [];
 
@@ -112,6 +113,7 @@ $c[LoginController::class] = fn($c) => new LoginController(
   $c[Login::class]($c),
   $c[Environment::class]($c)
 );
+$c[LogoutController::class] = fn() => new LogoutController();
 
 // Configuration de Twig
 $c[Environment::class] = function ($c) {

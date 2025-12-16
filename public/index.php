@@ -12,6 +12,11 @@ use App\Infrastructure\Middleware\AuthMiddleware;
 use Twig\Environment;
 use App\Infrastructure\Controller\Owner\ShowCreateParkingFormController;
 use App\Infrastructure\Controller\Owner\CreateParkingController;
+use App\Infrastructure\Controller\Owner\ListOwnerParkingsController;
+use App\Infrastructure\Controller\Auth\LoginController;
+use App\Infrastructure\Controller\Auth\LogoutController;
+use App\Infrastructure\Controller\Auth\ShowRegisterOwnerController;
+use App\Infrastructure\Controller\Auth\RegisterOwnerController;
 // --- DÉBUT DU BLOC GLOBAL ---
 // On met TOUT le code logique dans ce try. 
 // S'il y a la moindre erreur (Auth, Route pas trouvée, Controller qui plante...), on va dans le catch.
@@ -39,15 +44,16 @@ try {
     // Ajoute ici tes futures routes (Dashboard, Login, etc.)
 
     // Liste owner parkings (dashboard and json)
-    $r->addRoute('GET', '/dashboard', App\Infrastructure\Controller\Owner\ListOwnerParkingsController::class);
-    $r->addRoute('GET', '/my-parkings', App\Infrastructure\Controller\Owner\ListOwnerParkingsController::class);
+    $r->addRoute('GET', '/dashboard', ListOwnerParkingsController::class);
+    $r->addRoute('GET', '/my-parkings', ListOwnerParkingsController::class);
 
     // Register Owner
-    $r->addRoute('GET', '/register/owner', App\Infrastructure\Controller\Auth\ShowRegisterOwnerController::class);
-    $r->addRoute('POST', '/register/owner', App\Infrastructure\Controller\Auth\RegisterOwnerController::class);
+    $r->addRoute('GET', '/register/owner', ShowRegisterOwnerController::class);
+    $r->addRoute('POST', '/register/owner', RegisterOwnerController::class);
 
-    // Login
-    $r->addRoute(['GET', 'POST'], '/login', App\Infrastructure\Controller\Auth\LoginController::class);
+    // Login & Logout
+    $r->addRoute(['GET', 'POST'], '/login', LoginController::class);
+    $r->addRoute('GET', '/logout', LogoutController::class);
   });
 
   // 3. ANALYSE DE L'URL (DISPATCH)
