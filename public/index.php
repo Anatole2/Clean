@@ -42,8 +42,12 @@ try {
     $r->addRoute('GET', '/dashboard', App\Infrastructure\Controller\Owner\ListOwnerParkingsController::class);
     $r->addRoute('GET', '/my-parkings', App\Infrastructure\Controller\Owner\ListOwnerParkingsController::class);
 
+    // Register Owner
     $r->addRoute('GET', '/register/owner', App\Infrastructure\Controller\Auth\ShowRegisterOwnerController::class);
     $r->addRoute('POST', '/register/owner', App\Infrastructure\Controller\Auth\RegisterOwnerController::class);
+
+    // Login
+    $r->addRoute(['GET', 'POST'], '/login', App\Infrastructure\Controller\Auth\LoginController::class);
   });
 
   // 3. ANALYSE DE L'URL (DISPATCH)

@@ -96,7 +96,7 @@ $c[CreateParkingController::class] = function ($c) {
 $c[ShowCreateParkingFormController::class] = fn($c) => new ShowCreateParkingFormController(
   $c[Environment::class]($c)
 );
-$c[ListOwnerParkingsController::class] = fn($c) => new App\Infrastructure\Controller\Owner\ListOwnerParkingsController(
+$c[ListOwnerParkingsController::class] = fn($c) => new ListOwnerParkingsController(
   $c[GetOwnerParkings::class]($c),
   $c[PresenterFactory::class]($c)
 );
@@ -108,7 +108,7 @@ $c[RegisterOwnerController::class] = fn($c) => new RegisterOwnerController(
   $c[PresenterFactory::class]($c),
   $c[Environment::class]($c)
 );
-$c[LoginController::class] = fn($c) => new App\Infrastructure\Controller\Auth\LoginController(
+$c[LoginController::class] = fn($c) => new LoginController(
   $c[Login::class]($c),
   $c[Environment::class]($c)
 );

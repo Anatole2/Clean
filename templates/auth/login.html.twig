@@ -1,0 +1,41 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Connexion{% endblock %}
+
+{% block body %}
+<article class="grid" style="max-width: 600px; margin: 40px auto;">
+    <div>
+        <hgroup>
+            <h1>Connexion</h1>
+            <h2>Accédez à votre espace</h2>
+        </hgroup>
+
+        {% if error %}
+            <div role="alert" style="background-color: #ffebeb; color: #c00; padding: 1rem; border-radius: var(--pico-border-radius); margin-bottom: 1rem;">
+                ⚠️ {{ error }}
+            </div>
+        {% endif %}
+
+        <form action="/login" method="POST">
+            <label for="email">
+                Adresse Email
+                <input type="email" name="email" id="email" placeholder="votre@email.com" value="{{ last_email|default('') }}" required>
+            </label>
+
+            <label for="password">
+                Mot de passe
+                <input type="password" name="password" id="password" required>
+            </label>
+
+            <button type="submit" class="contrast">Se connecter</button>
+        </form>
+
+        <hr>
+
+        <p style="text-align: center;">
+            Pas encore de compte ? <br>
+            <a href="/register/owner">Créer un compte Propriétaire</a>
+        </p>
+    </div>
+</article>
+{% endblock %}
