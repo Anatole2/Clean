@@ -19,6 +19,8 @@ use App\Infrastructure\Controller\Owner\ListOwnerParkingsController;
 use App\Infrastructure\Controller\Auth\ShowRegisterOwnerController;
 use App\Infrastructure\Controller\Auth\RegisterOwnerController;
 use App\UseCase\Auth\RegisterOwner\RegisterOwner;
+use App\UseCase\Auth\Login\Login;
+use App\Infrastructure\Controller\Auth\LoginController;
 
 $c = [];
 
@@ -42,36 +44,16 @@ $c[PresenterFactory::class] = fn($c) => new PresenterFactory($c[Environment::cla
 
 // --- 3. SÉCURITÉ (LA CORRECTION EST ICI) ---
 
-// On crée une fausse classe qui ÉTEND la vraie classe JwtService.
-// Cela permet de tromper le type-hinting du Middleware.
+// Jwt service
 $c[JwtService::class] = function () {
-  // On passe une fausse clé au constructeur parent pour qu'il ne plante pas
-  return new class('fake_secret_key') extends JwtService {
-
-    // On surcharge la méthode decodeToken pour simuler notre propriétaire
-    public function decodeToken(string $token): object
-    {
-      if ($token === 'TOKEN_PROPRIO_TEST') {
-        // On retourne l'objet attendu par le code de ton collègue
-        return (object) [
-          'id' => 'owner-1',
-          'role' => 'OWNER',
-          'email' => 'test@owner.com'
-        ];
-      }
-
-      // Si ce n'est pas le token de test, on lance une erreur
-      throw new \Exception("Token de test invalide (Mock)");
-    }
-
-
-    // (Optionnel) On peut aussi mocker generateToken si besoin
-    public function generateToken($account): string
-    {
-      return "fake_token";
-    }
-  };
+  $secretKey = getenv('JWT_SECRET');
+  // Vérification stricte
+  if ($secretKey === false || trim($secretKey) === '') {
+    throw new \RuntimeException('ERREUR CRITIQUE : La variable d\'environnement JWT_SECRET est manquante.');
+  }
+  return new JwtService($secretKey);
 };
+
 
 // On injecte ce faux service dans le middleware
 $c[AuthMiddleware::class] = fn($c) => new AuthMiddleware($c[JwtService::class]());
@@ -90,6 +72,11 @@ $c[GetOwnerParkings::class] = fn($c) => new GetOwnerParkings(
 $c[RegisterOwner::class] = fn($c) => new RegisterOwner(
   $c[SqlAccountRepository::class]($c), // Attention au nommage exact de ta clé Repository
   $c[RamseyIdGenerator::class]()
+);
+
+$c[Login::class] = fn($c) => new Login(
+  $c[SqlAccountRepository::class]($c),
+  $c[JwtService::class]()
 );
 // (J'ai ajouté les autres Use Cases pour que ton OwnerController complet fonctionne plus tard)
 // Tu peux les commenter si tu ne les as pas encore créés
@@ -121,7 +108,10 @@ $c[RegisterOwnerController::class] = fn($c) => new RegisterOwnerController(
   $c[PresenterFactory::class]($c),
   $c[Environment::class]($c)
 );
-
+$c[LoginController::class] = fn($c) => new App\Infrastructure\Controller\Auth\LoginController(
+  $c[Login::class]($c),
+  $c[Environment::class]($c)
+);
 
 // Configuration de Twig
 $c[Environment::class] = function ($c) {
