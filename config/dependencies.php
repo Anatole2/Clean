@@ -1,6 +1,7 @@
 <?php
 
 use App\Infrastructure\Repository\SqlParkingRepository;
+use App\Infrastructure\Repository\SqlAccountRepository;
 use App\Infrastructure\Service\RamseyIdGenerator;
 use App\Infrastructure\Controller\Owner\CreateParkingController;
 use App\Infrastructure\Presenter\PresenterFactory;
@@ -15,6 +16,9 @@ use App\UseCase\Owner\UpdateParkingHours\UpdateParkingHours;
 use App\UseCase\Owner\AddParkingSubscriptionPlan\AddParkingSubscriptionPlan;
 use App\UseCase\Owner\GetOwnerParkings\GetOwnerParkings;
 use App\Infrastructure\Controller\Owner\ListOwnerParkingsController;
+use App\Infrastructure\Controller\Auth\ShowRegisterOwnerController;
+use App\Infrastructure\Controller\Auth\RegisterOwnerController;
+use App\UseCase\Auth\RegisterOwner\RegisterOwner;
 
 $c = [];
 
@@ -32,6 +36,7 @@ $c[PDO::class] = function () {
 
 // --- 2. Services Infra ---
 $c[SqlParkingRepository::class] = fn($c) => new SqlParkingRepository($c[PDO::class]());
+$c[SqlAccountRepository::class] = fn($c) => new SqlAccountRepository($c[PDO::class]());
 $c[RamseyIdGenerator::class]    = fn() => new RamseyIdGenerator();
 $c[PresenterFactory::class] = fn($c) => new PresenterFactory($c[Environment::class]($c));
 
@@ -82,6 +87,10 @@ $c[GetOwnerParkings::class] = fn($c) => new GetOwnerParkings(
   $c[SqlParkingRepository::class]($c)
 );
 
+$c[RegisterOwner::class] = fn($c) => new RegisterOwner(
+  $c[SqlAccountRepository::class]($c), // Attention au nommage exact de ta clé Repository
+  $c[RamseyIdGenerator::class]()
+);
 // (J'ai ajouté les autres Use Cases pour que ton OwnerController complet fonctionne plus tard)
 // Tu peux les commenter si tu ne les as pas encore créés
 /*
@@ -104,6 +113,16 @@ $c[ListOwnerParkingsController::class] = fn($c) => new App\Infrastructure\Contro
   $c[GetOwnerParkings::class]($c),
   $c[PresenterFactory::class]($c)
 );
+$c[ShowRegisterOwnerController::class] = fn($c) => new ShowRegisterOwnerController(
+  $c[Environment::class]($c)
+);
+$c[RegisterOwnerController::class] = fn($c) => new RegisterOwnerController(
+  $c[RegisterOwner::class]($c),
+  $c[PresenterFactory::class]($c),
+  $c[Environment::class]($c)
+);
+
+
 // Configuration de Twig
 $c[Environment::class] = function ($c) {
   // 1. Charger Twig

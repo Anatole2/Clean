@@ -1,0 +1,17 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Inscription réussie{% endblock %}
+
+{% block body %}
+    <article style="text-align: center; padding: 40px;">
+        <header>
+            <h1>🎉 Félicitations {{ name }} !</h1>
+        </header>
+        <p>Votre compte a été créé avec succès.</p>
+        <p>Vous pouvez dès maintenant vous connecter.</p>
+        <br>
+        <a href="/login" role="button" class="contrast">
+            ➡️ Se connecter
+        </a>
+    </article>
+{% endblock %}
