@@ -25,9 +25,6 @@ class CreateParkingController extends AbstractController
     // On récupère les données JSON potentielles
     $jsonData = $this->getRequestData();
 
-    // On fusionne avec $_POST (priorité au formulaire HTML classique)
-    // C'est ça qui va régler ton problème "Grille vide"
-    $input = array_merge($jsonData, $_POST);
 
     // --- NETTOYAGE / CASTING ---
 

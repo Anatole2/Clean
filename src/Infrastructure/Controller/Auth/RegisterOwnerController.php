@@ -20,10 +20,8 @@ class RegisterOwnerController extends AbstractController
 
   public function __invoke(): void
   {
-    $jsonData = $this->getRequestData();
-    $jsonData = is_array($jsonData) ? $jsonData : [];
+    $input = $this->getRequestData();
 
-    $input = array_merge($_POST, $jsonData);
 
     try {
       $this->validateInputs($input);
@@ -88,10 +86,5 @@ class RegisterOwnerController extends AbstractController
       'last_firstname' => $data['firstName'] ?? '',
       'last_lastname' => $data['lastName'] ?? ''
     ]);
-  }
-
-  private function wantsJson(): bool
-  {
-    return isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json');
   }
 }
