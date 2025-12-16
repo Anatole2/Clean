@@ -13,6 +13,8 @@ use Twig\Environment;
 use App\UseCase\Owner\UpdateParkingPrice\UpdateParkingPrice;
 use App\UseCase\Owner\UpdateParkingHours\UpdateParkingHours;
 use App\UseCase\Owner\AddParkingSubscriptionPlan\AddParkingSubscriptionPlan;
+use App\UseCase\Owner\GetOwnerParkings\GetOwnerParkings;
+use App\Infrastructure\Controller\Owner\ListOwnerParkingsController;
 
 $c = [];
 
@@ -76,6 +78,10 @@ $c[CreateParking::class] = fn($c) => new CreateParking(
   $c[RamseyIdGenerator::class]()
 );
 
+$c[GetOwnerParkings::class] = fn($c) => new GetOwnerParkings(
+  $c[SqlParkingRepository::class]($c)
+);
+
 // (J'ai ajouté les autres Use Cases pour que ton OwnerController complet fonctionne plus tard)
 // Tu peux les commenter si tu ne les as pas encore créés
 /*
@@ -93,6 +99,10 @@ $c[CreateParkingController::class] = function ($c) {
 };
 $c[ShowCreateParkingFormController::class] = fn($c) => new ShowCreateParkingFormController(
   $c[Environment::class]($c)
+);
+$c[ListOwnerParkingsController::class] = fn($c) => new App\Infrastructure\Controller\Owner\ListOwnerParkingsController(
+  $c[GetOwnerParkings::class]($c),
+  $c[PresenterFactory::class]($c)
 );
 // Configuration de Twig
 $c[Environment::class] = function ($c) {

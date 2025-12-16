@@ -1,0 +1,52 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Mon Tableau de Bord{% endblock %}
+
+{% block body %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1>🚘 Mes Parkings</h1>
+        <a href="/parkings/new" role="button">➕ Ajouter un parking</a>
+    </div>
+
+    <hr>
+
+    {% if parkings is empty %}
+        <div style="text-align: center; padding: 3rem;">
+            <h3>Vous n'avez pas encore de parking.</h3>
+            <p>Commencez à gérer votre activité en ajoutant votre premier emplacement.</p>
+            <a href="/parkings/new" role="button" class="secondary">Créer mon premier parking</a>
+        </div>
+    {% else %}
+        <figure>
+            <table role="grid">
+                <thead>
+                    <tr>
+                        <th scope="col">Nom</th>
+                        <th scope="col">Capacité</th>
+                        <th scope="col">Coordonnées</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for parking in parkings %}
+                        <tr>
+                            <td><strong>{{ parking.name }}</strong></td>
+                            <td>{{ parking.totalPlaces }} places</td>
+                            <td>
+                                <small>
+                                    Lat: {{ parking.latitude }}<br>
+                                    Lon: {{ parking.longitude }}
+                                </small>
+                            </td>
+                            <td>
+                                <a href="/parkings/{{ parking.id }}/manage" role="button" class="outline">
+                                    ⚙️ Gérer
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </figure>
+    {% endif %}
+{% endblock %}

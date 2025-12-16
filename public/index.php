@@ -33,9 +33,14 @@ try {
   // 2. DÉFINITION DES ROUTES
   $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     // Tes routes
+    // Parkings
     $r->addRoute('GET', '/parkings/new', ShowCreateParkingFormController::class);
     $r->addRoute('POST', '/parkings', CreateParkingController::class);
     // Ajoute ici tes futures routes (Dashboard, Login, etc.)
+
+    // Liste owner parkings (dashboard and json)
+    $r->addRoute('GET', '/dashboard', App\Infrastructure\Controller\Owner\ListOwnerParkingsController::class);
+    $r->addRoute('GET', '/my-parkings', App\Infrastructure\Controller\Owner\ListOwnerParkingsController::class);
   });
 
   // 3. ANALYSE DE L'URL (DISPATCH)

@@ -11,6 +11,9 @@ class ShowCreateParkingFormController extends AbstractController
 
   public function __invoke(): void
   {
+
+    $this->ensureIsOwner();
+
     echo $this->twig->render('owner/create_parking.html.twig');
   }
 }
