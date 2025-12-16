@@ -29,12 +29,14 @@ class JwtService
     $now = new DateTimeImmutable();
 
     $payload = [
-      'iat' => $now->getTimestamp(), // Issued at: Heure de création du token
-      'exp' => $now->modify(sprintf('+%d seconds', $this->expirationSeconds))->getTimestamp(), // Expiration
-      'iss' => 'shared-parking-app', // Issuer: Émetteur (votre application)
-      'sub' => $account->getId(), // Subject: ID du compte (User ou Owner)
-      'role' => $account->getRole(), // Rôle (DRIVER ou OWNER)
+      'iat' => $now->getTimestamp(),
+      'exp' => $now->modify(sprintf('+%d seconds', $this->expirationSeconds))->getTimestamp(),
+      'iss' => 'shared-parking-app',
+      'sub' => $account->getId(),
+      'role' => $account->getRole(),
       'email' => $account->getEmail(),
+      'firstName' => $account->getFirstName(),
+      'lastName'  => $account->getLastName(),
     ];
 
     return JWT::encode($payload, $this->secretKey, $this->algorithm);
@@ -51,7 +53,14 @@ class JwtService
     try {
       // Décodage avec la vérification de la signature et des revendications (exp, iat, etc.)
       $decoded = JWT::decode($token, new Key($this->secretKey, $this->algorithm));
-      return $decoded;
+      return (object) [
+        'id'    => $decoded->sub,
+        'email' => $decoded->email,
+        'role'  => $decoded->role,
+        'firstName' => $decoded->firstName ?? '',
+        'lastName'  => $decoded->lastName ?? '',
+        'exp'       => $decoded->exp
+      ];
     } catch (\Firebase\JWT\ExpiredException $e) {
       // Le token est expiré
       throw new \Exception("Token expiré.");
