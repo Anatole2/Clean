@@ -1,3 +1,5 @@
+-- Parking Management System Database Schema
+-- Parkings Table
 CREATE TABLE IF NOT EXISTS parkings (
     id CHAR(36) PRIMARY KEY,
     owner_id CHAR(36) NOT NULL,
@@ -11,3 +13,13 @@ CREATE TABLE IF NOT EXISTS parkings (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Accounts Table
+CREATE TABLE accounts (
+    id CHAR(36) PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    role VARCHAR(20) NOT NULL
+);
