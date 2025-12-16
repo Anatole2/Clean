@@ -37,6 +37,7 @@ abstract class IntegrationTestCase extends TestCase
     // Désactive les clés étrangères pour pouvoir truncate dans n'importe quel ordre
     $this->pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
     $this->pdo->exec("TRUNCATE TABLE parkings");
+    $this->pdo->exec("TRUNCATE TABLE accounts");
     // Plus tard tu ajouteras : $this->pdo->exec("TRUNCATE TABLE reservations");
     $this->pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
   }
@@ -49,6 +50,16 @@ abstract class IntegrationTestCase extends TestCase
     if (!file_exists($schemaPath)) {
       throw new \Exception("Schema introuvable : " . $schemaPath);
     }
+
+    // On désactive les vérifications de clés étrangères pour pouvoir supprimer sans ordre précis
+    $this->pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
+
+    // On supprime proprement les tables si elles existent déjà
+    $this->pdo->exec("DROP TABLE IF EXISTS parkings");
+    $this->pdo->exec("DROP TABLE IF EXISTS accounts");
+    // $this->pdo->exec("DROP TABLE IF EXISTS reservations"); // Pour plus tard
+
+    $this->pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
 
     $sql = file_get_contents($schemaPath);
     $this->pdo->exec($sql);
