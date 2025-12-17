@@ -17,6 +17,9 @@ use App\Infrastructure\Controller\Auth\LoginController;
 use App\Infrastructure\Controller\Auth\LogoutController;
 use App\Infrastructure\Controller\Auth\ShowRegisterOwnerController;
 use App\Infrastructure\Controller\Auth\RegisterOwnerController;
+use App\Infrastructure\Controller\Auth\ShowRegisterUserController;
+use App\Infrastructure\Controller\Auth\RegisterUserController;
+
 // --- DÉBUT DU BLOC GLOBAL ---
 // On met TOUT le code logique dans ce try. 
 // S'il y a la moindre erreur (Auth, Route pas trouvée, Controller qui plante...), on va dans le catch.
@@ -50,6 +53,10 @@ try {
     // Register Owner
     $r->addRoute('GET', '/register/owner', ShowRegisterOwnerController::class);
     $r->addRoute('POST', '/register/owner', RegisterOwnerController::class);
+
+    // Register User
+    $r->addRoute('GET', '/register/user', ShowRegisterUserController::class);
+    $r->addRoute('POST', '/register/user', RegisterUserController::class);
 
     // Login & Logout
     $r->addRoute(['GET', 'POST'], '/login', LoginController::class);

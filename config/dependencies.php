@@ -19,6 +19,9 @@ use App\Infrastructure\Controller\Owner\ListOwnerParkingsController;
 use App\Infrastructure\Controller\Auth\ShowRegisterOwnerController;
 use App\Infrastructure\Controller\Auth\RegisterOwnerController;
 use App\UseCase\Auth\RegisterOwner\RegisterOwner;
+use App\Infrastructure\Controller\Auth\ShowRegisterUserController;
+use App\Infrastructure\Controller\Auth\RegisterUserController;
+use App\UseCase\Auth\RegisterUser\RegisterUser;
 use App\UseCase\Auth\Login\Login;
 use App\Infrastructure\Controller\Auth\LoginController;
 use App\Infrastructure\Controller\Auth\LogoutController;
@@ -71,7 +74,12 @@ $c[GetOwnerParkings::class] = fn($c) => new GetOwnerParkings(
 );
 
 $c[RegisterOwner::class] = fn($c) => new RegisterOwner(
-  $c[SqlAccountRepository::class]($c), // Attention au nommage exact de ta clé Repository
+  $c[SqlAccountRepository::class]($c),
+  $c[RamseyIdGenerator::class]()
+);
+
+$c[RegisterUser::class] = fn($c) => new RegisterUser(
+  $c[SqlAccountRepository::class]($c),
   $c[RamseyIdGenerator::class]()
 );
 
@@ -106,6 +114,14 @@ $c[ShowRegisterOwnerController::class] = fn($c) => new ShowRegisterOwnerControll
 );
 $c[RegisterOwnerController::class] = fn($c) => new RegisterOwnerController(
   $c[RegisterOwner::class]($c),
+  $c[PresenterFactory::class]($c),
+  $c[Environment::class]($c)
+);
+$c[ShowRegisterUserController::class] = fn($c) => new ShowRegisterUserController(
+  $c[Environment::class]($c)
+);
+$c[RegisterUserController::class] = fn($c) => new RegisterUserController(
+  $c[RegisterUser::class]($c),
   $c[PresenterFactory::class]($c),
   $c[Environment::class]($c)
 );

@@ -1,0 +1,43 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Inscription Utilisateur{% endblock %}
+
+{% block body %}
+    <article class="grid">
+        <div>
+            <hgroup>
+                <h1>Devenez Utilisateur</h1>
+                <h2>Créez votre compte utilisateur pour réserver des parkings.</h2>
+            </hgroup>
+            
+            {% if error %}
+                <div role="alert" style="background-color: #ffdddd; color: #d8000c; padding: 10px; margin-bottom: 20px; border-radius: 5px;">
+                    ⚠️ {{ error }}
+                </div>
+            {% endif %}
+
+            <form action="/register/user" method="POST">
+                <div class="grid">
+                    <label for="firstname">
+                        Prénom
+                        <input type="text" id="firstname" name="firstName" placeholder="Jean" required>
+                    </label>
+                    <label for="lastname">
+                        Nom
+                        <input type="text" id="lastname" name="lastName" placeholder="Dupont" required>
+                    </label>
+                </div>
+
+                <label for="email">Adresse Email</label>
+                <input type="email" id="email" name="email" placeholder="jean.dupont@email.com" required>
+
+                <label for="password">Mot de passe</label>
+                <input type="password" id="password" name="password" required>
+
+                <button type="submit" class="contrast">Créer mon compte</button>
+            </form>
+            
+            <p>Déjà inscrit ? <a href="/login">Se connecter</a></p>
+        </div>
+    </article>
+{% endblock %}
