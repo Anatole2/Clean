@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.0/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         cacheDirectory=".phpunit.cache">
+    <testsuites>
+      <testsuite name="Unit">
+        <directory suffix="Test.php">tests/Unit</directory>
+      </testsuite>
+      <testsuite name="Integration">
+        <directory suffix="Test.php">tests/Integration</directory>
+      </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory suffix=".php">src/Domain</directory>
+            <directory suffix=".php">src/UseCase</directory>
+            <directory suffix=".php">src/Infrastructure/Repository</directory>
+        </include>
+        <exclude>
+            <directory>src/Infrastructure/Container.php</directory>
+            <directory>src/Infrastructure/Controller</directory>
+            <directory>src/Infrastructure/Presenter</directory>
+            <directory>src/Infrastructure/Service</directory>
+            <directory>src/Infrastructure/Security</directory>
+            <directory>src/Infrastructure/Middleware</directory>
+            <file>src/Infrastructure/dependencies.php</file>
+        </exclude>
+    </source>
+    <php>
+        <ini name="display_errors" value="1" />
+        <ini name="error_reporting" value="-1" />
+        
+        <env name="APP_ENV" value="test" />
+    </php>
+
+</phpunit>
