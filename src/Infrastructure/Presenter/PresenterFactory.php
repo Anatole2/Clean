@@ -8,7 +8,6 @@ use Twig\Environment;
 
 class PresenterFactory
 {
-  // 👇 1. On injecte Twig ici pour pouvoir le distribuer plus tard
   public function __construct(
     private Environment $twig
   ) {}

@@ -19,6 +19,7 @@ use App\Infrastructure\Controller\Auth\ShowRegisterOwnerController;
 use App\Infrastructure\Controller\Auth\RegisterOwnerController;
 use App\Infrastructure\Controller\Auth\ShowRegisterUserController;
 use App\Infrastructure\Controller\Auth\RegisterUserController;
+use App\Infrastructure\Controller\User\SearchParkingsController;
 
 // --- DÉBUT DU BLOC GLOBAL ---
 // On met TOUT le code logique dans ce try. 
@@ -61,6 +62,9 @@ try {
     // Login & Logout
     $r->addRoute(['GET', 'POST'], '/login', LoginController::class);
     $r->addRoute('GET', '/logout', LogoutController::class);
+
+    // User - Search Parkings
+    $r->addRoute('GET', '/search', SearchParkingsController::class);
   });
 
   // 3. ANALYSE DE L'URL (DISPATCH)

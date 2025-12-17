@@ -2,29 +2,37 @@
 
 use App\Infrastructure\Repository\SqlParkingRepository;
 use App\Infrastructure\Repository\SqlAccountRepository;
+use App\Domain\Repository\ParkingRepositoryInterface;
+use App\Domain\Repository\AccountRepositoryInterface;
+
 use App\Infrastructure\Service\RamseyIdGenerator;
-use App\Infrastructure\Controller\Owner\CreateParkingController;
 use App\Infrastructure\Presenter\PresenterFactory;
-use App\Infrastructure\Controller\Owner\ShowCreateParkingFormController;
 use App\Infrastructure\Middleware\AuthMiddleware;
 use App\Infrastructure\Security\JwtService;
+
+// Use Cases
 use App\UseCase\Owner\CreateParking\CreateParking;
-use Twig\Loader\FilesystemLoader;
-use Twig\Environment;
-use App\UseCase\Owner\UpdateParkingPrice\UpdateParkingPrice;
-use App\UseCase\Owner\UpdateParkingHours\UpdateParkingHours;
-use App\UseCase\Owner\AddParkingSubscriptionPlan\AddParkingSubscriptionPlan;
 use App\UseCase\Owner\GetOwnerParkings\GetOwnerParkings;
+use App\UseCase\Auth\RegisterOwner\RegisterOwner;
+use App\UseCase\Auth\RegisterUser\RegisterUser;
+use App\UseCase\Auth\Login\Login;
+use App\UseCase\User\SearchParkings\SearchParkings;
+
+// Controllers
+use App\Infrastructure\Controller\Owner\CreateParkingController;
+use App\Infrastructure\Controller\Owner\ShowCreateParkingFormController;
 use App\Infrastructure\Controller\Owner\ListOwnerParkingsController;
 use App\Infrastructure\Controller\Auth\ShowRegisterOwnerController;
 use App\Infrastructure\Controller\Auth\RegisterOwnerController;
-use App\UseCase\Auth\RegisterOwner\RegisterOwner;
 use App\Infrastructure\Controller\Auth\ShowRegisterUserController;
 use App\Infrastructure\Controller\Auth\RegisterUserController;
-use App\UseCase\Auth\RegisterUser\RegisterUser;
-use App\UseCase\Auth\Login\Login;
 use App\Infrastructure\Controller\Auth\LoginController;
 use App\Infrastructure\Controller\Auth\LogoutController;
+use App\Infrastructure\Controller\User\SearchParkingsController;
+
+// Twig
+use Twig\Loader\FilesystemLoader;
+use Twig\Environment;
 
 $c = [];
 
@@ -40,125 +48,127 @@ $c[PDO::class] = function () {
   ]);
 };
 
-// --- 2. Services Infra ---
-$c[SqlParkingRepository::class] = fn($c) => new SqlParkingRepository($c[PDO::class]());
-$c[SqlAccountRepository::class] = fn($c) => new SqlAccountRepository($c[PDO::class]());
+// --- 2. Repositories (MAPPING INTERFACE => IMPLEMENTATION) ---
+$c[ParkingRepositoryInterface::class] = fn($c) => new SqlParkingRepository($c[PDO::class]());
+$c[AccountRepositoryInterface::class] = fn($c) => new SqlAccountRepository($c[PDO::class]());
+
+// --- 3. Services Infra ---
 $c[RamseyIdGenerator::class]    = fn() => new RamseyIdGenerator();
 $c[PresenterFactory::class] = fn($c) => new PresenterFactory($c[Environment::class]($c));
 
-// --- 3. SÉCURITÉ (LA CORRECTION EST ICI) ---
-
-// Jwt service
+// --- 4. SÉCURITÉ ---
 $c[JwtService::class] = function () {
   $secretKey = getenv('JWT_SECRET');
-  // Vérification stricte
   if ($secretKey === false || trim($secretKey) === '') {
-    throw new \RuntimeException('ERREUR CRITIQUE : La variable d\'environnement JWT_SECRET est manquante.');
+    throw new \RuntimeException('ERREUR CRITIQUE : JWT_SECRET manquant.');
   }
   return new JwtService($secretKey);
 };
 
-
-// On injecte ce faux service dans le middleware
 $c[AuthMiddleware::class] = fn($c) => new AuthMiddleware($c[JwtService::class]());
 
 
-// --- 4. Use Cases ---
+// --- 5. Use Cases (Tout le monde utilise les Interfaces maintenant) ---
 $c[CreateParking::class] = fn($c) => new CreateParking(
-  $c[SqlParkingRepository::class]($c),
+  $c[ParkingRepositoryInterface::class]($c),
   $c[RamseyIdGenerator::class]()
 );
 
 $c[GetOwnerParkings::class] = fn($c) => new GetOwnerParkings(
-  $c[SqlParkingRepository::class]($c)
+  $c[ParkingRepositoryInterface::class]($c)
 );
 
 $c[RegisterOwner::class] = fn($c) => new RegisterOwner(
-  $c[SqlAccountRepository::class]($c),
+  $c[AccountRepositoryInterface::class]($c),
   $c[RamseyIdGenerator::class]()
 );
 
 $c[RegisterUser::class] = fn($c) => new RegisterUser(
-  $c[SqlAccountRepository::class]($c),
+  $c[AccountRepositoryInterface::class]($c),
   $c[RamseyIdGenerator::class]()
 );
 
 $c[Login::class] = fn($c) => new Login(
-  $c[SqlAccountRepository::class]($c),
+  $c[AccountRepositoryInterface::class]($c),
   $c[JwtService::class]()
 );
-// (J'ai ajouté les autres Use Cases pour que ton OwnerController complet fonctionne plus tard)
-// Tu peux les commenter si tu ne les as pas encore créés
-/*
-$c[UpdateParkingPrice::class] = fn($c) => new UpdateParkingPrice($c[SqlParkingRepository::class]());
-$c[UpdateParkingHours::class] = fn($c) => new UpdateParkingHours($c[SqlParkingRepository::class]());
-$c[AddParkingSubscriptionPlan::class] = fn($c) => new AddParkingSubscriptionPlan($c[SqlParkingRepository::class]());
-*/
 
-// --- 5. Controllers ---
+$c[SearchParkings::class] = fn($c) => new SearchParkings(
+  $c[ParkingRepositoryInterface::class]($c)
+);
+
+
+// --- 6. Controllers ---
 $c[CreateParkingController::class] = function ($c) {
   return new CreateParkingController(
-    $c[CreateParking::class]($c),    // On repasse $c ici aussi !
-    $c[PresenterFactory::class]($c)  // Et ici !
+    $c[CreateParking::class]($c),
+    $c[PresenterFactory::class]($c)
   );
 };
+
 $c[ShowCreateParkingFormController::class] = fn($c) => new ShowCreateParkingFormController(
   $c[Environment::class]($c)
 );
+
 $c[ListOwnerParkingsController::class] = fn($c) => new ListOwnerParkingsController(
   $c[GetOwnerParkings::class]($c),
   $c[PresenterFactory::class]($c)
 );
+
 $c[ShowRegisterOwnerController::class] = fn($c) => new ShowRegisterOwnerController(
   $c[Environment::class]($c)
 );
+
 $c[RegisterOwnerController::class] = fn($c) => new RegisterOwnerController(
   $c[RegisterOwner::class]($c),
   $c[PresenterFactory::class]($c),
   $c[Environment::class]($c)
 );
+
 $c[ShowRegisterUserController::class] = fn($c) => new ShowRegisterUserController(
   $c[Environment::class]($c)
 );
+
 $c[RegisterUserController::class] = fn($c) => new RegisterUserController(
   $c[RegisterUser::class]($c),
   $c[PresenterFactory::class]($c),
   $c[Environment::class]($c)
 );
+
 $c[LoginController::class] = fn($c) => new LoginController(
   $c[Login::class]($c),
   $c[Environment::class]($c)
 );
+
 $c[LogoutController::class] = fn() => new LogoutController();
 
-// Configuration de Twig
+$c[SearchParkingsController::class] = fn($c) => new SearchParkingsController(
+  $c[SearchParkings::class]($c),
+  $c[PresenterFactory::class]($c),
+  $c[Environment::class]($c)
+);
+
+// --- 7. Configuration de Twig ---
 $c[Environment::class] = function ($c) {
-  // 1. Charger Twig
   $loader = new FilesystemLoader(__DIR__ . '/../templates');
   $twig = new Environment($loader, [
     'cache' => false,
     'debug' => true,
   ]);
 
-  // 2. RECUPERER L'UTILISATEUR DEPUIS LE COOKIE (Si présent)
+  // Récupération User via Cookie
   $user = null;
   if (isset($_COOKIE['auth_token'])) {
     try {
-      // On utilise ton JwtService pour décoder le token du cookie
-      $jwtService = $c[JwtService::class](); // On récupère l'instance
+      $jwtService = $c[JwtService::class]();
       $user = $jwtService->decodeToken($_COOKIE['auth_token']);
-
-      // On transforme l'objet en tableau pour Twig (plus simple)
       $user = (array) $user;
     } catch (\Exception $e) {
-      // Si le token est invalide/expiré, on ignore (user reste null)
     }
   }
 
-  // 3. INJECTER LA VARIABLE GLOBALE 'user'
-  // Désormais, {{ user }} est disponible dans TOUS les templates
   $twig->addGlobal('user', $user);
-
   return $twig;
 };
+
 return $c;
