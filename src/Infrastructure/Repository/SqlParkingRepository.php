@@ -133,41 +133,41 @@ class SqlParkingRepository implements ParkingRepositoryInterface
 
     return $parkings;
   }
+  /* public function findNearby(GpsCoordinates $center, float $radiusInKm): array */
+  /* { */
+  /*   throw new Exception("TODO"); */
+  /* } */
+  // La fonction findNearby() utilisant la formule de Haversine est commentée ci-dessous.
   public function findNearby(GpsCoordinates $center, float $radiusInKm): array
   {
-    throw new Exception("TODO");
+    // Formule de Haversine pour calculer la distance en km directement en SQL
+    // 6371 est le rayon de la Terre en km
+    $sql = "
+              SELECT *, 
+              (6371 * acos(
+                  cos(radians(:lat)) * cos(radians(latitude)) * cos(radians(longitude) - radians(:lon)) 
+                  + sin(radians(:lat)) * sin(radians(latitude))
+              )) AS distance 
+              FROM parkings 
+              HAVING distance < :radius 
+              ORDER BY distance ASC
+          ";
+
+    $stmt = $this->pdo->prepare($sql);
+    $stmt->execute([
+      'lat' => $center->getLatitude(),
+      'lon' => $center->getLongitude(),
+      'radius' => $radiusInKm
+    ]);
+
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $parkings = [];
+    foreach ($rows as $row) {
+      $parkings[] = $this->mapRowToEntity($row);
+    }
+
+    return $parkings;
   }
-  // La fonction findNearby() utilisant la formule de Haversine est commentée ci-dessous.
-  /* public function findNearby(GpsCoordinates $center, float $radiusInKm): array */
-  /*     { */
-  /*         // Formule de Haversine pour calculer la distance en km directement en SQL */
-  /*         // 6371 est le rayon de la Terre en km */
-  /*         $sql = " */
-  /*             SELECT *,  */
-  /*             (6371 * acos( */
-  /*                 cos(radians(:lat)) * cos(radians(latitude)) * cos(radians(longitude) - radians(:lon))  */
-  /*                 + sin(radians(:lat)) * sin(radians(latitude)) */
-  /*             )) AS distance  */
-  /*             FROM parkings  */
-  /*             HAVING distance < :radius  */
-  /*             ORDER BY distance ASC */
-  /*         "; */
-  /**/
-  /*         $stmt = $this->pdo->prepare($sql); */
-  /*         $stmt->execute([ */
-  /*             'lat' => $center->getLatitude(), */
-  /*             'lon' => $center->getLongitude(), */
-  /*             'radius' => $radiusInKm */
-  /*         ]); */
-  /**/
-  /*         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC); */
-  /**/
-  /*         $parkings = []; */
-  /*         foreach ($rows as $row) { */
-  /*             $parkings[] = $this->mapRowToEntity($row); */
-  /*         } */
-  /**/
-  /*         return $parkings; */
-  /*     } */
   // TODO: Implémenter delete(), findAll(), etc. selon l'interface définie
 }

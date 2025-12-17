@@ -276,4 +276,66 @@ class SqlParkingRepositoryTest extends IntegrationTestCase
     $results = $this->repo->findByOwnerId('unknown-owner');
     $this->assertEmpty($results);
   }
+  public function testFindNearbyReturnsParkingsInRadiusOrderedByDistance(): void
+  {
+    // ARRANGE : On prépare 3 parkings
+    $dummyPrice = new PriceGrid([60 => 100]);
+    $dummySchedule = new WeeklySchedule([]);
+
+    // 1. Parking au centre de Paris (Notre-Dame) - CIBLE (0 km)
+    // Coordonnées : 48.8530, 2.3499
+    $centerParis = new Parking(
+      'p-center',
+      'o1',
+      'Parking Centre',
+      new GpsCoordinates(48.8530, 2.3499),
+      10,
+      $dummyPrice,
+      $dummySchedule
+    );
+
+    // 2. Parking à la Défense (environ 8-9 km du centre) - DANS LE RAYON DE 10KM
+    // Coordonnées : 48.8924, 2.2361
+    $defense = new Parking(
+      'p-defense',
+      'o1',
+      'Parking Defense',
+      new GpsCoordinates(48.8924, 2.2361),
+      10,
+      $dummyPrice,
+      $dummySchedule
+    );
+
+    // 3. Parking à Versailles (environ 17-20 km du centre) - HORS RAYON DE 10KM
+    // Coordonnées : 48.8049, 2.1204
+    $versailles = new Parking(
+      'p-versailles',
+      'o1',
+      'Parking Versailles',
+      new GpsCoordinates(48.8049, 2.1204),
+      10,
+      $dummyPrice,
+      $dummySchedule
+    );
+
+    $this->repo->save($centerParis);
+    $this->repo->save($defense);
+    $this->repo->save($versailles);
+
+    // ACT : Recherche à partir du centre de Paris, rayon 10 km
+    $searchCenter = new GpsCoordinates(48.8530, 2.3499);
+    $results = $this->repo->findNearby($searchCenter, 10.0);
+
+    // ASSERT
+    // On s'attend à trouver le Centre (0km) et la Défense (~9km), mais PAS Versailles (~17km)
+    $this->assertCount(2, $results, "Devrait trouver 2 parkings sur 3");
+
+    // Vérification de l'ordre : Le premier doit être le plus proche (Centre)
+    $this->assertEquals('p-center', $results[0]->getId());
+    $this->assertEquals('p-defense', $results[1]->getId());
+
+    // Vérification que Versailles est bien exclu
+    $ids = array_map(fn($p) => $p->getId(), $results);
+    $this->assertNotContains('p-versailles', $ids);
+  }
 }
