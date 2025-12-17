@@ -78,4 +78,25 @@ abstract class AbstractController
       throw new \Exception("Accès refusé : Espace Propriétaire uniquement", 403);
     }
   }
+  protected function ensureIsUser(): void
+  {
+    $user = $this->getAuthUser();
+
+    // 1. Cas : Utilisateur non connecté -> On redirige vers le login
+    if (!$user) {
+      // Si c'est une requête API (cURL/Fetch), on renvoie une 401
+      if ($this->wantsJson()) {
+        throw new \Exception("Authentification requise", 401);
+      }
+
+      // Si c'est un navigateur, on redirige
+      header('Location: /login');
+      exit;
+    }
+
+    // 2. Cas : Utilisateur connecté mais mauvais rôle -> Erreur 403
+    if ($user->role !== 'USER') {
+      throw new \Exception("Accès refusé : Espace Conducteur uniquement", 403);
+    }
+  }
 }
