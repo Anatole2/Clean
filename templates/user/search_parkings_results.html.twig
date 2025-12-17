@@ -1,0 +1,29 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Résultats de recherche{% endblock %}
+
+{% block body %}
+<div class="container">
+    <a href="/search">← Nouvelle recherche</a>
+    <h1>Parkings trouvés</h1>
+
+    {% if parkings is empty %}
+        <article>Aucun parking trouvé dans cette zone.</article>
+    {% else %}
+        <div class="grid">
+        {% for parking in parkings %}
+            <article>
+                <header><strong>{{ parking.name }}</strong></header>
+                <p>
+                    {{ parking.totalPlaces }} places<br>
+                    <small>{{ parking.priceLabel }}</small>
+                </p>
+                <footer>
+                    <a href="/reservation/new?parkingId={{ parking.id }}" role="button">Réserver</a>
+                </footer>
+            </article>
+        {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

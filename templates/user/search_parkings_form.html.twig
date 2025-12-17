@@ -1,0 +1,37 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Recherche de Parking{% endblock %}
+
+{% block body %}
+<div class="container" style="max-width: 600px; margin-top: 50px;">
+    <h1>Trouver un parking</h1>
+
+    {% if error %}
+        <div style="color: red; padding: 10px; background: #fee;">⚠️ {{ error }}</div>
+    {% endif %}
+
+    <form action="/search" method="GET" id="search-form">
+        
+        <label>Latitude <input type="text" name="lat" id="lat" required></label>
+        <label>Longitude <input type="text" name="lon" id="lon" required></label>
+        
+        <input type="hidden" name="radius" value="15">
+
+        <div class="grid">
+            <button type="button" id="btn-geo" class="secondary">📍 Ma Position</button>
+            <button type="submit">Rechercher</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Petit script pour remplir lat/lon automatiquement
+    document.getElementById('btn-geo').addEventListener('click', () => {
+        if(!navigator.geolocation) return alert('GPS non supporté');
+        navigator.geolocation.getCurrentPosition(pos => {
+            document.getElementById('lat').value = pos.coords.latitude;
+            document.getElementById('lon').value = pos.coords.longitude;
+        });
+    });
+</script>
+{% endblock %}
