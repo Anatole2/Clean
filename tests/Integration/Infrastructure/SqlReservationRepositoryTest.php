@@ -108,4 +108,25 @@ class SqlReservationRepositoryTest extends IntegrationTestCase
     $this->pdo->exec("INSERT INTO parkings (id, name, latitude, longitude, total_places, price_grid, opening_hours, subscription_plans, owner_id) 
             VALUES ('p1', 'Parking Test', 0, 0, 10, '{}', '{}', '[]', 'u1')");
   }
+  public function testFindById(): void
+  {
+    // 1. On crée une réservation
+    $start = new DateTimeImmutable('2025-01-01 10:00');
+    $end = new DateTimeImmutable('2025-01-01 12:00');
+    $reservation = new Reservation('res-id-123', 'u1', 'p1', $start, $end, 1000, 'CONFIRMED');
+
+    $this->repo->save($reservation);
+
+    // 2. On la cherche par son ID
+    $found = $this->repo->findById('res-id-123');
+
+    // 3. Vérifications
+    $this->assertNotNull($found);
+    $this->assertEquals('res-id-123', $found->getId());
+    $this->assertEquals(1000, $found->getPricePaidInCents());
+
+    // 4. On cherche un ID qui n'existe pas
+    $notFound = $this->repo->findById('unknown-id');
+    $this->assertNull($notFound);
+  }
 }

@@ -29,6 +29,7 @@ use App\UseCase\User\SearchParkings\SearchParkings;
 use App\UseCase\User\CreateReservation\CreateReservation;
 use App\UseCase\Shared\GetParkingDetails\GetParkingDetails;
 use App\UseCase\User\EnterParking\EnterParking;
+use App\UseCase\User\ExitParking\ExitParking;
 
 // Controllers
 use App\Infrastructure\Controller\Owner\CreateParkingController;
@@ -45,6 +46,7 @@ use App\Infrastructure\Controller\User\ShowReservationFormController;
 use App\Infrastructure\Controller\User\CreateReservationController;
 use App\Infrastructure\Controller\Shared\GetParkingDetailsController;
 use App\Infrastructure\Controller\User\EnterParkingController;
+use App\Infrastructure\Controller\User\ExitParkingController;
 
 // Twig
 use Twig\Loader\FilesystemLoader;
@@ -134,6 +136,13 @@ $c[EnterParking::class] = fn($c) => new EnterParking(
   $c[RamseyIdGenerator::class]()
 );
 
+$c[ExitParking::class] = fn($c) => new ExitParking(
+  $c[ParkingSessionRepositoryInterface::class]($c),
+  $c[ParkingRepositoryInterface::class]($c),
+  $c[ReservationRepositoryInterface::class]($c),
+  $c[UserSubscriptionRepositoryInterface::class]($c)
+);
+
 // --- 6. Controllers ---
 $c[CreateParkingController::class] = function ($c) {
   return new CreateParkingController(
@@ -202,6 +211,10 @@ $c[GetParkingDetailsController::class] = fn($c) => new GetParkingDetailsControll
 
 $c[EnterParkingController::class] = fn($c) => new EnterParkingController(
   $c[EnterParking::class]($c)
+);
+
+$c[ExitParkingController::class] = fn($c) => new ExitParkingController(
+  $c[ExitParking::class]($c)
 );
 
 // --- 7. Configuration de Twig ---

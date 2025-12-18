@@ -29,7 +29,13 @@ class SqlReservationRepository implements ReservationRepositoryInterface
       'status' => $reservation->getStatus()
     ]);
   }
-
+  public function findById(string $id): ?\App\Domain\Entity\Reservation
+  {
+    $stmt = $this->connection->prepare("SELECT * FROM reservations WHERE id = :id");
+    $stmt->execute(['id' => $id]);
+    $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+    return $row ? $this->hydrate($row) : null;
+  }
   public function countOverlappingReservations(string $parkingId, DateTimeImmutable $start, DateTimeImmutable $end): int
   {
     $sql = "SELECT COUNT(*) FROM reservations 

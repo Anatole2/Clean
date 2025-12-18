@@ -13,7 +13,6 @@ use App\UseCase\User\SearchParkings\SearchParkingsRequest;
 use App\UseCase\User\SearchParkings\SearchParkingsResponse;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use App\UseCase\User\SearchParkings\SearchParkingsResult;
 
 class SearchParkingsTest extends TestCase
 {
