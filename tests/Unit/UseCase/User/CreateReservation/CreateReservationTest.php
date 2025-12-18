@@ -54,9 +54,13 @@ class CreateReservationTest extends TestCase
     // 1. Mock Parking (10 places, Prix 2€)
     $parking = $this->createMock(Parking::class);
     $parking->method('getTotalPlaces')->willReturn(10);
+    $schedule = $this->createMock(\App\Domain\ValueObject\WeeklySchedule::class);
+    $schedule->method('isOpen')->willReturn(true);
+    $parking->method('getOpeningHours')->willReturn($schedule);
     $priceGrid = $this->createMock(PriceGrid::class);
-    $priceGrid->method('calculatePrice')->willReturn(200); // 200 cents
+    $priceGrid->method('calculatePrice')->willReturn(200);
     $parking->method('getPriceGrid')->willReturn($priceGrid);
+    $parking->method('getTotalPlaces')->willReturn(10);
 
     $this->parkingRepo->method('findById')->willReturn($parking);
 
@@ -91,6 +95,9 @@ class CreateReservationTest extends TestCase
 
     // 1. Mock Parking (Total 5 places)
     $parking = $this->createMock(Parking::class);
+    $schedule = $this->createMock(\App\Domain\ValueObject\WeeklySchedule::class);
+    $schedule->method('isOpen')->willReturn(true); // <--- Important
+    $parking->method('getOpeningHours')->willReturn($schedule);
     $parking->method('getTotalPlaces')->willReturn(5);
     $parking->method('getPriceGrid')->willReturn($this->createMock(PriceGrid::class)); // Pour éviter erreur sur null
 
@@ -171,5 +178,28 @@ class CreateReservationTest extends TestCase
     $end = new DateTimeImmutable('+1 hour');
 
     new CreateReservationRequest('u1', 'p1', $start, $end);
+  }
+  public function testExecuteThrowsExceptionIfParkingIsClosed(): void
+  {
+    $this->expectException(\Exception::class);
+    $this->expectExceptionMessage("Le parking est fermé sur les horaires demandés.");
+
+    // ARRANGE
+    $start = new DateTimeImmutable('+1 day 03:00');
+    $end = new DateTimeImmutable('+1 day 05:00');
+    $request = new CreateReservationRequest('u1', 'p1', $start, $end);
+
+    // Mock du Parking et de son WeeklySchedule
+    $parking = $this->createMock(Parking::class);
+    $schedule = $this->createMock(\App\Domain\ValueObject\WeeklySchedule::class);
+
+    // On dit que le parking est FERMÉ (isOpen return false)
+    $schedule->method('isOpen')->willReturn(false);
+
+    $parking->method('getOpeningHours')->willReturn($schedule);
+    $this->parkingRepo->method('findById')->willReturn($parking);
+
+    // ACT
+    $this->useCase->execute($request);
   }
 }

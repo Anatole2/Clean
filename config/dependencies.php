@@ -1,9 +1,13 @@
 <?php
-
+// Repositories
 use App\Infrastructure\Repository\SqlParkingRepository;
 use App\Infrastructure\Repository\SqlAccountRepository;
+use App\Infrastructure\Repository\SqlReservationRepository;
+use App\Infrastructure\Repository\SqlUserSubscriptionRepository;
 use App\Domain\Repository\ParkingRepositoryInterface;
 use App\Domain\Repository\AccountRepositoryInterface;
+use App\Domain\Repository\ReservationRepositoryInterface;
+use App\Domain\Repository\UserSubscriptionRepositoryInterface;
 
 use App\Infrastructure\Service\RamseyIdGenerator;
 use App\Infrastructure\Presenter\PresenterFactory;
@@ -17,6 +21,7 @@ use App\UseCase\Auth\RegisterOwner\RegisterOwner;
 use App\UseCase\Auth\RegisterUser\RegisterUser;
 use App\UseCase\Auth\Login\Login;
 use App\UseCase\User\SearchParkings\SearchParkings;
+use App\UseCase\User\CreateReservation\CreateReservation;
 
 // Controllers
 use App\Infrastructure\Controller\Owner\CreateParkingController;
@@ -29,6 +34,8 @@ use App\Infrastructure\Controller\Auth\RegisterUserController;
 use App\Infrastructure\Controller\Auth\LoginController;
 use App\Infrastructure\Controller\Auth\LogoutController;
 use App\Infrastructure\Controller\User\SearchParkingsController;
+use App\Infrastructure\Controller\User\ShowReservationFormController;
+use App\Infrastructure\Controller\User\CreateReservationController;
 
 // Twig
 use Twig\Loader\FilesystemLoader;
@@ -51,6 +58,8 @@ $c[PDO::class] = function () {
 // --- 2. Repositories (MAPPING INTERFACE => IMPLEMENTATION) ---
 $c[ParkingRepositoryInterface::class] = fn($c) => new SqlParkingRepository($c[PDO::class]());
 $c[AccountRepositoryInterface::class] = fn($c) => new SqlAccountRepository($c[PDO::class]());
+$c[ReservationRepositoryInterface::class] = fn($c) => new SqlReservationRepository($c[PDO::class]());
+$c[UserSubscriptionRepositoryInterface::class] = fn($c) => new SqlUserSubscriptionRepository($c[PDO::class]());
 
 // --- 3. Services Infra ---
 $c[RamseyIdGenerator::class]    = fn() => new RamseyIdGenerator();
@@ -71,6 +80,13 @@ $c[AuthMiddleware::class] = fn($c) => new AuthMiddleware($c[JwtService::class]()
 // --- 5. Use Cases (Tout le monde utilise les Interfaces maintenant) ---
 $c[CreateParking::class] = fn($c) => new CreateParking(
   $c[ParkingRepositoryInterface::class]($c),
+  $c[RamseyIdGenerator::class]()
+);
+
+$c[CreateReservation::class] = fn($c) => new CreateReservation(
+  $c[ParkingRepositoryInterface::class]($c),
+  $c[ReservationRepositoryInterface::class]($c),
+  $c[UserSubscriptionRepositoryInterface::class]($c),
   $c[RamseyIdGenerator::class]()
 );
 
@@ -146,6 +162,16 @@ $c[SearchParkingsController::class] = fn($c) => new SearchParkingsController(
   $c[SearchParkings::class]($c),
   $c[PresenterFactory::class]($c),
   $c[Environment::class]($c)
+);
+
+$c[ShowReservationFormController::class] = fn($c) => new ShowReservationFormController(
+  $c[ParkingRepositoryInterface::class]($c),
+  $c[Environment::class]($c)
+);
+
+$c[CreateReservationController::class] = fn($c) => new CreateReservationController(
+  $c[CreateReservation::class]($c),
+  $c[PresenterFactory::class]($c)
 );
 
 // --- 7. Configuration de Twig ---

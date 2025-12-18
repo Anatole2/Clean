@@ -1,0 +1,20 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Confirmation{% endblock %}
+
+{% block body %}
+<div class="container">
+    <article style="background-color: #e6fffa; border-color: #20c997;">
+        <header>✅ <strong>Réservation Confirmée !</strong></header>
+        <p>Votre place est réservée.</p>
+        <ul>
+            <li><strong>Début :</strong> {{ reservation.startTime | date('d/m/Y H:i') }}</li>
+            <li><strong>Fin :</strong> {{ reservation.endTime | date('d/m/Y H:i') }}</li>
+            <li><strong>Prix payé :</strong> {{ reservation.pricePaidInCents / 100 }} €</li>
+        </ul>
+        <footer>
+            <a href="/search" role="button" class="secondary">Faire une autre recherche</a>
+        </footer>
+    </article>
+</div>
+{% endblock %}

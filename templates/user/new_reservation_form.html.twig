@@ -1,0 +1,71 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Réserver {{ parking.name }}{% endblock %}
+
+{% block body %}
+<div class="container" style="max-width: 600px;">
+    <hgroup>
+        <h1>Réserver une place</h1>
+        <h2>{{ parking.name }}</h2>
+    </hgroup>
+
+    <article>
+        <p>📍 {{ parking.totalPlaces }} places au total.</p>
+        <p>💶 <strong>Tarification :</strong> Le prix sera calculé automatiquement.</p>
+
+        <hr>
+        <details>
+            <summary><strong>🕒 Voir les horaires d'ouverture</strong></summary>
+            
+            {% set rules = parking.openingHours.toArray %}
+            
+            {% if rules is empty %}
+                <p style="margin-top: 1rem; color: green;">✅ Ouvert 24h/24 et 7j/7</p>
+            {% else %}
+                <table role="grid" style="margin-top: 1rem;">
+                    <thead>
+                        <tr>
+                            <th>Du</th>
+                            <th>Au</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {# Mapping des numéros de jour vers du texte #}
+                        {% set days = {
+                            1: 'Lundi', 2: 'Mardi', 3: 'Mercredi', 
+                            4: 'Jeudi', 5: 'Vendredi', 6: 'Samedi', 7: 'Dimanche'
+                        } %}
+
+                        {% for rule in rules %}
+                            <tr>
+                                <td>
+                                    {{ days[rule.startDay] }} à {{ rule.startTime }}
+                                </td>
+                                <td>
+                                    {# Si c'est le même jour, on n'affiche pas le nom du jour de fin pour alléger #}
+                                    {% if rule.startDay == rule.endDay %}
+                                        {{ rule.endTime }}
+                                    {% else %}
+                                        {{ days[rule.endDay] }} à {{ rule.endTime }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </details>
+    </article>
+    <form action="/reservation" method="POST">
+        <input type="hidden" name="parkingId" value="{{ parking.id }}">
+
+        <label for="start_time">Date et Heure d'arrivée</label>
+        <input type="datetime-local" id="start_time" name="start_time" required>
+
+        <label for="end_time">Date et Heure de départ</label>
+        <input type="datetime-local" id="end_time" name="end_time" required>
+
+        <button type="submit">Confirmer la réservation</button>
+    </form>
+</div>
+{% endblock %}

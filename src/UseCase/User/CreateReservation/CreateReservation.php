@@ -28,23 +28,30 @@ class CreateReservation
       throw new Exception("Parking introuvable.");
     }
 
-    // 2. Calcul du Prix (Via la Grille de Prix du Parking)
+    // --- 🆕 AJOUT : VÉRIFICATION DES HORAIRES D'OUVERTURE ---
+    $openingHours = $parking->getOpeningHours(); // Assure-toi que ce getter existe dans Parking
+
+    // On vérifie que le parking est ouvert au moment de l'arrivée ET au moment du départ
+    if (!$openingHours->isOpen($request->startTime) || !$openingHours->isOpen($request->endTime)) {
+      throw new Exception("Le parking est fermé sur les horaires demandés.");
+    }
+    // --------------------------------------------------------
+
+    // 2. Calcul du Prix
     $durationInMinutes = (int) ceil(
       ($request->endTime->getTimestamp() - $request->startTime->getTimestamp()) / 60
     );
 
-    // On utilise la méthode calculatePrice de ton PriceGrid (via le parking)
     $priceInCents = $parking->getPriceGrid()->calculatePrice($durationInMinutes);
 
-    // 3. VÉRIFICATION DE LA CAPACITÉ (Le cœur du métier)
+    // 3. VÉRIFICATION DE LA CAPACITÉ
     $occupiedSpots = $this->calculateOccupiedSpots($request);
 
-    // Si (Places Prises + Ma Future Place) > Capacité Totale => ERREUR
     if (($occupiedSpots + 1) > $parking->getTotalPlaces()) {
       throw new Exception("Le parking est complet pour ce créneau.");
     }
 
-    // 4. Création de la réservation
+    // 4. Création
     $reservation = new Reservation(
       $this->idGenerator->generate(),
       $request->userId,
@@ -60,20 +67,15 @@ class CreateReservation
     return new CreateReservationResponse($reservation);
   }
 
-  /**
-   * Calcule le nombre de places occupées (Réservations + Abonnements)
-   */
+  // ... (Ta méthode calculateOccupiedSpots reste inchangée)
   private function calculateOccupiedSpots(CreateReservationRequest $request): int
   {
-    // A. Compter les réservations ponctuelles (C'est SQL qui fait le travail)
+    // ...
     $reservationCount = $this->reservationRepo->countOverlappingReservations(
       $request->parkingId,
       $request->startTime,
       $request->endTime
     );
-
-    // B. Compter les abonnements actifs
-    // 1. On récupère ceux qui chevauchent les DATES (via SQL)
     $potentialSubscriptions = $this->subscriptionRepo->findActiveOverlappingRange(
       $request->parkingId,
       $request->startTime,
@@ -82,14 +84,10 @@ class CreateReservation
 
     $subscriptionCount = 0;
     foreach ($potentialSubscriptions as $sub) {
-      // 2. On affine en PHP : Est-ce que l'abonnement mange une place 
-      // précisément pendant mes horaires demandés ?
-      // On vérifie le début OU la fin pour être sûr d'attraper un chevauchement
       if ($sub->occupiesSpotAt($request->startTime) || $sub->occupiesSpotAt($request->endTime)) {
         $subscriptionCount++;
       }
     }
-
     return $reservationCount + $subscriptionCount;
   }
 }

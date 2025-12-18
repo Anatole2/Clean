@@ -20,6 +20,8 @@ use App\Infrastructure\Controller\Auth\RegisterOwnerController;
 use App\Infrastructure\Controller\Auth\ShowRegisterUserController;
 use App\Infrastructure\Controller\Auth\RegisterUserController;
 use App\Infrastructure\Controller\User\SearchParkingsController;
+use App\Infrastructure\Controller\User\ShowReservationFormController;
+use App\Infrastructure\Controller\User\CreateReservationController;
 
 // --- DÉBUT DU BLOC GLOBAL ---
 // On met TOUT le code logique dans ce try. 
@@ -65,6 +67,10 @@ try {
 
     // User - Search Parkings
     $r->addRoute('GET', '/search', SearchParkingsController::class);
+
+    // User - Reservation
+    $r->addRoute('GET', '/reservation/new', ShowReservationFormController::class);
+    $r->addRoute('POST', '/reservation', CreateReservationController::class);
   });
 
   // 3. ANALYSE DE L'URL (DISPATCH)
