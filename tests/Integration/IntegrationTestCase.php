@@ -38,7 +38,8 @@ abstract class IntegrationTestCase extends TestCase
     $this->pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
     $this->pdo->exec("TRUNCATE TABLE parkings");
     $this->pdo->exec("TRUNCATE TABLE accounts");
-    // Plus tard tu ajouteras : $this->pdo->exec("TRUNCATE TABLE reservations");
+    $this->pdo->exec("TRUNCATE TABLE reservations");
+    $this->pdo->exec("TRUNCATE TABLE user_subscriptions");
     $this->pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
   }
 
@@ -57,8 +58,8 @@ abstract class IntegrationTestCase extends TestCase
     // On supprime proprement les tables si elles existent déjà
     $this->pdo->exec("DROP TABLE IF EXISTS parkings");
     $this->pdo->exec("DROP TABLE IF EXISTS accounts");
-    // $this->pdo->exec("DROP TABLE IF EXISTS reservations"); // Pour plus tard
-
+    $this->pdo->exec("DROP TABLE IF EXISTS reservations");
+    $this->pdo->exec("DROP TABLE IF EXISTS user_subscriptions");
     $this->pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
 
     $sql = file_get_contents($schemaPath);
