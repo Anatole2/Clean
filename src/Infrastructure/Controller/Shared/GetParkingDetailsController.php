@@ -8,12 +8,14 @@ use App\Infrastructure\Controller\AbstractController;
 use App\Infrastructure\Presenter\PresenterFactory;
 use App\UseCase\Shared\GetParkingDetails\GetParkingDetails;
 use App\UseCase\Shared\GetParkingDetails\GetParkingDetailsRequest;
+use Twig\Environment;
 
 class GetParkingDetailsController extends AbstractController
 {
   public function __construct(
     private GetParkingDetails $useCase,
-    private PresenterFactory $presenterFactory
+    private PresenterFactory $presenterFactory,
+    private Environment $twig
   ) {}
 
   public function __invoke(string $id): void
@@ -21,6 +23,7 @@ class GetParkingDetailsController extends AbstractController
     try {
       // Optionnel : ensureIsUser() ou ensureIsOwner() si tu veux restreindre
       // Mais généralement voir une fiche parking est public ou accessible aux deux.
+      $this->getAuthUserId();
       $this->ensureIsUser();
 
       $request = new GetParkingDetailsRequest(
@@ -37,7 +40,18 @@ class GetParkingDetailsController extends AbstractController
 
       echo $presenter->present($response);
     } catch (\Exception $e) {
-      $this->sendError($e->getMessage(), 404);
+      $this->handleError($e);
+    }
+  }
+  private function handleError(\Exception $e): void
+  {
+    if ($this->wantsJson()) {
+      $this->sendError($e->getMessage(), 400);
+    } else {
+      echo $this->twig->render('error.html.twig', [
+        'code' => $e->getCode(),
+        'message' => $e->getMessage()
+      ]);
     }
   }
 }

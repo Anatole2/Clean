@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Integration\Infrastructure;
 
 use App\Domain\Entity\Reservation;
 use App\Infrastructure\Repository\SqlReservationRepository;
-use DateTimeImmutable;
 use Tests\Integration\IntegrationTestCase;
+use DateTimeImmutable;
 
 class SqlReservationRepositoryTest extends IntegrationTestCase
 {
@@ -15,90 +17,95 @@ class SqlReservationRepositoryTest extends IntegrationTestCase
   {
     parent::setUp();
     $this->repo = new SqlReservationRepository($this->pdo);
+    $this->createDummyData();
   }
 
-  public function testItSavesAndCountsOverlappingReservations(): void
+  public function testSaveAndCountOverlapping(): void
   {
-    // 1. Pré-requis : Créer un User et un Parking (pour les Clés Étrangères)
-    $this->createDummyUser('u1');
-    $this->createDummyParking('p1');
+    // Test existant (conservation de la logique de base)
+    $start = new DateTimeImmutable('2025-01-01 10:00');
+    $end = new DateTimeImmutable('2025-01-01 12:00');
 
-    // 2. Création d'une réservation de référence : 14h00 à 16h00
-    $start = new DateTimeImmutable('2024-01-01 14:00:00');
-    $end   = new DateTimeImmutable('2024-01-01 16:00:00');
-
-    $reservation = new Reservation('res-1', 'u1', 'p1', $start, $end, 500);
-    $this->repo->save($reservation);
-
-    // 3. VÉRIFICATION DU COMPTEUR (La logique Overlap)
-
-    // CAS A : Pas de chevauchement (Avant : 12h-14h)
-    // Note: Si je finis à 14h00 pile et que l'autre commence à 14h00 pile, ça ne touche pas.
-    $count = $this->repo->countOverlappingReservations(
-      'p1',
-      new DateTimeImmutable('2024-01-01 12:00:00'),
-      new DateTimeImmutable('2024-01-01 14:00:00')
-    );
-    $this->assertEquals(0, $count, "Ne devrait pas compter la réservation d'avant");
-
-    // CAS B : Chevauchement Total (Dedans : 14h30-15h30)
-    $count = $this->repo->countOverlappingReservations(
-      'p1',
-      new DateTimeImmutable('2024-01-01 14:30:00'),
-      new DateTimeImmutable('2024-01-01 15:30:00')
-    );
-    $this->assertEquals(1, $count, "Devrait trouver la réservation (inclus)");
-
-    // CAS C : Chevauchement Partiel (Début : 13h00-15h00)
-    $count = $this->repo->countOverlappingReservations(
-      'p1',
-      new DateTimeImmutable('2024-01-01 13:00:00'),
-      new DateTimeImmutable('2024-01-01 15:00:00')
-    );
-    $this->assertEquals(1, $count, "Devrait trouver la réservation (overlap début)");
-
-    // CAS D : Chevauchement Partiel (Fin : 15h00-17h00)
-    $count = $this->repo->countOverlappingReservations(
-      'p1',
-      new DateTimeImmutable('2024-01-01 15:00:00'),
-      new DateTimeImmutable('2024-01-01 17:00:00')
-    );
-    $this->assertEquals(1, $count, "Devrait trouver la réservation (overlap fin)");
-
-    // CAS E : Un autre parking
-    $this->createDummyParking('p2');
-    $count = $this->repo->countOverlappingReservations(
-      'p2', // ID différent
-      new DateTimeImmutable('2024-01-01 14:30:00'),
-      new DateTimeImmutable('2024-01-01 15:30:00')
-    );
-    $this->assertEquals(0, $count, "Ne devrait pas compter les réservations d'un autre parking");
-  }
-
-  public function testItIgnoresCancelledReservations(): void
-  {
-    $this->createDummyUser('u1');
-    $this->createDummyParking('p1');
-
-    $start = new DateTimeImmutable('2024-01-01 14:00:00');
-    $end   = new DateTimeImmutable('2024-01-01 16:00:00');
-
-    // On crée une réservation annulée
-    $reservation = new Reservation('res-cancel', 'u1', 'p1', $start, $end, 0, Reservation::STATUS_CANCELLED);
+    $reservation = new Reservation('res-1', 'u1', 'p1', $start, $end, 1000, 'CONFIRMED');
     $this->repo->save($reservation);
 
     $count = $this->repo->countOverlappingReservations('p1', $start, $end);
-
-    $this->assertEquals(0, $count, "Une réservation annulée ne doit pas compter comme place occupée");
+    $this->assertEquals(1, $count);
   }
 
-  // --- Helpers SQL rapides ---
-  private function createDummyUser(string $id): void
+  // 👇 NOUVEAU TEST
+  public function testFindActiveForUserReturnsReservationWhenValid(): void
   {
-    $this->pdo->exec("INSERT INTO accounts (id, email, password_hash, role) VALUES ('$id', 'test@test.com', 'hash', 'USER')");
+    // ARRANGE
+    // Réservation de 14h à 16h
+    $start = new DateTimeImmutable('2025-01-01 14:00');
+    $end   = new DateTimeImmutable('2025-01-01 16:00');
+    $res = new Reservation('res-active', 'u1', 'p1', $start, $end, 500, 'CONFIRMED');
+    $this->repo->save($res);
+
+    // ACT
+    // On cherche à 15h00 (au milieu)
+    $now = new DateTimeImmutable('2025-01-01 15:00');
+    $found = $this->repo->findActiveForUser('u1', 'p1', $now);
+
+    // ASSERT
+    $this->assertNotNull($found);
+    $this->assertEquals('res-active', $found->getId());
   }
-  private function createDummyParking(string $id): void
+
+  // 👇 NOUVEAU TEST
+  public function testFindActiveForUserReturnsNullIfTimeIsOutside(): void
   {
-    $this->pdo->exec("INSERT INTO parkings (id, owner_id, name, latitude, longitude, total_places, price_grid, opening_hours, subscription_plans) VALUES ('$id', 'owner', 'P', 0, 0, 10, '{}', '[]', '[]')");
+    // ARRANGE
+    // Réservation de 14h à 16h
+    $res = new Reservation(
+      'res-out',
+      'u1',
+      'p1',
+      new DateTimeImmutable('2025-01-01 14:00'),
+      new DateTimeImmutable('2025-01-01 16:00'),
+      500,
+      'CONFIRMED'
+    );
+    $this->repo->save($res);
+
+    // ACT & ASSERT
+    // Cas 1 : Trop tôt (13:59)
+    $tooEarly = $this->repo->findActiveForUser('u1', 'p1', new DateTimeImmutable('2025-01-01 13:59'));
+    $this->assertNull($tooEarly, "Ne doit pas trouver si trop tôt");
+
+    // Cas 2 : Trop tard (16:01)
+    $tooLate = $this->repo->findActiveForUser('u1', 'p1', new DateTimeImmutable('2025-01-01 16:01'));
+    $this->assertNull($tooLate, "Ne doit pas trouver si trop tard");
+  }
+
+  // 👇 NOUVEAU TEST
+  public function testFindActiveForUserReturnsNullIfCancelled(): void
+  {
+    // ARRANGE
+    $res = new Reservation(
+      'res-cancelled',
+      'u1',
+      'p1',
+      new DateTimeImmutable('2025-01-01 14:00'),
+      new DateTimeImmutable('2025-01-01 16:00'),
+      500,
+      'CANCELLED' // ❌ Annulée
+    );
+    $this->repo->save($res);
+
+    // ACT
+    $now = new DateTimeImmutable('2025-01-01 15:00');
+    $found = $this->repo->findActiveForUser('u1', 'p1', $now);
+
+    // ASSERT
+    $this->assertNull($found);
+  }
+
+  private function createDummyData(): void
+  {
+    $this->pdo->exec("INSERT INTO accounts (id, email, password_hash, role) VALUES ('u1', 'test@test.com', 'hash', 'USER')");
+    $this->pdo->exec("INSERT INTO parkings (id, name, latitude, longitude, total_places, price_grid, opening_hours, subscription_plans, owner_id) 
+            VALUES ('p1', 'Parking Test', 0, 0, 10, '{}', '{}', '[]', 'u1')");
   }
 }

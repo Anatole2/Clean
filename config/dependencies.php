@@ -1,4 +1,7 @@
 <?php
+// Configuration globale du timezone pour l'application
+date_default_timezone_set('Europe/Paris');
+
 // Repositories
 use App\Infrastructure\Repository\SqlParkingRepository;
 use App\Infrastructure\Repository\SqlAccountRepository;
@@ -8,6 +11,8 @@ use App\Domain\Repository\ParkingRepositoryInterface;
 use App\Domain\Repository\AccountRepositoryInterface;
 use App\Domain\Repository\ReservationRepositoryInterface;
 use App\Domain\Repository\UserSubscriptionRepositoryInterface;
+use App\Domain\Repository\ParkingSessionRepositoryInterface;
+use App\Infrastructure\Repository\SqlParkingSessionRepository;
 
 use App\Infrastructure\Service\RamseyIdGenerator;
 use App\Infrastructure\Presenter\PresenterFactory;
@@ -23,6 +28,7 @@ use App\UseCase\Auth\Login\Login;
 use App\UseCase\User\SearchParkings\SearchParkings;
 use App\UseCase\User\CreateReservation\CreateReservation;
 use App\UseCase\Shared\GetParkingDetails\GetParkingDetails;
+use App\UseCase\User\EnterParking\EnterParking;
 
 // Controllers
 use App\Infrastructure\Controller\Owner\CreateParkingController;
@@ -38,6 +44,7 @@ use App\Infrastructure\Controller\User\SearchParkingsController;
 use App\Infrastructure\Controller\User\ShowReservationFormController;
 use App\Infrastructure\Controller\User\CreateReservationController;
 use App\Infrastructure\Controller\Shared\GetParkingDetailsController;
+use App\Infrastructure\Controller\User\EnterParkingController;
 
 // Twig
 use Twig\Loader\FilesystemLoader;
@@ -62,6 +69,7 @@ $c[ParkingRepositoryInterface::class] = fn($c) => new SqlParkingRepository($c[PD
 $c[AccountRepositoryInterface::class] = fn($c) => new SqlAccountRepository($c[PDO::class]());
 $c[ReservationRepositoryInterface::class] = fn($c) => new SqlReservationRepository($c[PDO::class]());
 $c[UserSubscriptionRepositoryInterface::class] = fn($c) => new SqlUserSubscriptionRepository($c[PDO::class]());
+$c[ParkingSessionRepositoryInterface::class] = fn($c) => new SqlParkingSessionRepository($c[PDO::class]());
 
 // --- 3. Services Infra ---
 $c[RamseyIdGenerator::class]    = fn() => new RamseyIdGenerator();
@@ -117,6 +125,13 @@ $c[SearchParkings::class] = fn($c) => new SearchParkings(
 
 $c[GetParkingDetails::class] = fn($c) => new GetParkingDetails(
   $c[ParkingRepositoryInterface::class]($c)
+);
+
+$c[EnterParking::class] = fn($c) => new EnterParking(
+  $c[ParkingSessionRepositoryInterface::class]($c),
+  $c[ReservationRepositoryInterface::class]($c),
+  $c[UserSubscriptionRepositoryInterface::class]($c),
+  $c[RamseyIdGenerator::class]()
 );
 
 // --- 6. Controllers ---
@@ -181,7 +196,12 @@ $c[CreateReservationController::class] = fn($c) => new CreateReservationControll
 
 $c[GetParkingDetailsController::class] = fn($c) => new GetParkingDetailsController(
   $c[GetParkingDetails::class]($c),
-  $c[PresenterFactory::class]($c)
+  $c[PresenterFactory::class]($c),
+  $c[Environment::class]($c)
+);
+
+$c[EnterParkingController::class] = fn($c) => new EnterParkingController(
+  $c[EnterParking::class]($c)
 );
 
 // --- 7. Configuration de Twig ---

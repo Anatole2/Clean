@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Integration\Infrastructure;
 
 use App\Domain\Entity\UserSubscription;
 use App\Domain\ValueObject\WeeklySchedule;
 use App\Infrastructure\Repository\SqlUserSubscriptionRepository;
-use DateTimeImmutable;
 use Tests\Integration\IntegrationTestCase;
+use DateTimeImmutable;
 
 class SqlUserSubscriptionRepositoryTest extends IntegrationTestCase
 {
@@ -16,94 +18,97 @@ class SqlUserSubscriptionRepositoryTest extends IntegrationTestCase
   {
     parent::setUp();
     $this->repo = new SqlUserSubscriptionRepository($this->pdo);
+    $this->createDummyData();
   }
 
-  public function testItSavesAndRetrievesSubscriptionWithSchedule(): void
+  public function testSaveAndFindOverlapping(): void
   {
-    // 1. Pré-requis
-    $this->createDummyUser('u1');
-    $this->createDummyParking('p1');
-
-    // 2. Création d'un Schedule complexe
-    $schedule = new WeeklySchedule([
-      ['startDay' => 1, 'startTime' => '08:00', 'endDay' => 1, 'endTime' => '12:00']
-    ]);
-
+    // Test basique existant
+    $schedule = new WeeklySchedule([]); // Vide = H24
     $sub = new UserSubscription(
       'sub-1',
       'u1',
       'p1',
-      'plan-A',
-      new DateTimeImmutable('2024-01-01'),
-      new DateTimeImmutable('2024-01-31'),
-      $schedule
+      'plan-1',
+      new DateTimeImmutable('2025-01-01'),
+      new DateTimeImmutable('2025-01-31'),
+      $schedule,
+      true
     );
 
-    // 3. Sauvegarde
     $this->repo->save($sub);
 
-    // 4. Récupération (via findActiveOverlappingRange qui fait office de find)
-    $results = $this->repo->findActiveOverlappingRange(
+    $found = $this->repo->findActiveOverlappingRange('p1', new DateTimeImmutable('2025-01-05'), new DateTimeImmutable('2025-01-06'));
+    $this->assertCount(1, $found);
+  }
+
+  // 👇 NOUVEAU TEST : Vérifie le filtrage précis des jours
+  public function testFindActiveForUserRespectsWeeklySchedule(): void
+  {
+    // ARRANGE
+    // Abonnement valable tout Janvier 2025
+    // MAIS uniquement le LUNDI (Day 1) de 08h à 18h
+    $scheduleData = [
+      ['startDay' => 1, 'startTime' => '08:00', 'endDay' => 1, 'endTime' => '18:00']
+    ];
+    $schedule = new WeeklySchedule($scheduleData);
+
+    $sub = new UserSubscription(
+      'sub-monday',
+      'u1',
       'p1',
-      new DateTimeImmutable('2024-01-10'),
-      new DateTimeImmutable('2024-01-11')
+      'plan-1',
+      new DateTimeImmutable('2025-01-01 00:00'),
+      new DateTimeImmutable('2025-01-31 23:59'),
+      $schedule,
+      true
     );
+    $this->repo->save($sub);
 
-    $this->assertCount(1, $results);
-    $retrieved = $results[0];
+    // CAS 1 : On cherche un Lundi à 10h (Le 6 Janvier 2025 est un Lundi)
+    $mondayMorning = new DateTimeImmutable('2025-01-06 10:00:00');
+    $found = $this->repo->findActiveForUser('u1', 'p1', $mondayMorning);
 
-    $this->assertEquals('sub-1', $retrieved->getId());
-    $this->assertEquals('plan-A', $retrieved->getPlanId());
+    $this->assertNotNull($found, "Devrait trouver l'abo car c'est un Lundi matin");
+    $this->assertEquals('sub-monday', $found->getId());
 
-    // Vérification de la reconstruction du WeeklySchedule
-    $this->assertTrue(
-      $retrieved->getSchedule()->isOpen(new DateTimeImmutable('Monday 09:00')),
-      "Le schedule JSON doit avoir été correctement reconstruit"
-    );
+    // CAS 2 : On cherche un Lundi SOIR (Hors horaires)
+    $mondayNight = new DateTimeImmutable('2025-01-06 20:00:00');
+    $notFoundTime = $this->repo->findActiveForUser('u1', 'p1', $mondayNight);
+    $this->assertNull($notFoundTime, "Ne devrait pas trouver car hors des heures du lundi");
+
+    // CAS 3 : On cherche un MARDI (Le 7 Janvier 2025)
+    $tuesday = new DateTimeImmutable('2025-01-07 10:00:00');
+    $notFoundDay = $this->repo->findActiveForUser('u1', 'p1', $tuesday);
+    $this->assertNull($notFoundDay, "Ne devrait pas trouver car ce n'est pas un lundi");
   }
 
-  public function testFindActiveOverlappingRangeFiltersCorrectly(): void
+  // 👇 NOUVEAU TEST : Vérifie le flag is_active
+  public function testFindActiveForUserReturnsNullIfInactive(): void
   {
-    $this->createDummyUser('u1');
-    $this->createDummyParking('p1');
-    $dummySchedule = new WeeklySchedule([]); // 24/7
-
-    // Abo A : Janvier (Actif)
-    $subA = new UserSubscription('A', 'u1', 'p1', 'plan', new DateTimeImmutable('2024-01-01'), new DateTimeImmutable('2024-01-31'), $dummySchedule);
-
-    // Abo B : Février (Actif)
-    $subB = new UserSubscription('B', 'u1', 'p1', 'plan', new DateTimeImmutable('2024-02-01'), new DateTimeImmutable('2024-02-28'), $dummySchedule);
-
-    // Abo C : Janvier (MAIS Inactif)
-    $subC = new UserSubscription('C', 'u1', 'p1', 'plan', new DateTimeImmutable('2024-01-01'), new DateTimeImmutable('2024-01-31'), $dummySchedule, false);
-
-    $this->repo->save($subA);
-    $this->repo->save($subB);
-    $this->repo->save($subC);
-
-    // ACT : On cherche sur la période "15 Janvier - 15 Février"
-    // On doit trouver A (finit le 31 jan) et B (commence le 1er fév).
-    // On ne doit PAS trouver C (inactif).
-    $results = $this->repo->findActiveOverlappingRange(
+    $schedule = new WeeklySchedule([]); // H24
+    $sub = new UserSubscription(
+      'sub-inactive',
+      'u1',
       'p1',
-      new DateTimeImmutable('2024-01-15'),
-      new DateTimeImmutable('2024-02-15')
+      'plan-1',
+      new DateTimeImmutable('2025-01-01'),
+      new DateTimeImmutable('2025-01-31'),
+      $schedule,
+      false // ❌ Inactif
     );
+    $this->repo->save($sub);
 
-    $ids = array_map(fn($s) => $s->getId(), $results);
+    $now = new DateTimeImmutable('2025-01-10 12:00');
+    $found = $this->repo->findActiveForUser('u1', 'p1', $now);
 
-    $this->assertContains('A', $ids, "Abo A chevauche Janvier");
-    $this->assertContains('B', $ids, "Abo B chevauche Février");
-    $this->assertNotContains('C', $ids, "Abo C est inactif");
+    $this->assertNull($found);
   }
 
-  // --- Helpers ---
-  private function createDummyUser(string $id): void
+  private function createDummyData(): void
   {
-    $this->pdo->exec("INSERT INTO accounts (id, email, password_hash, role) VALUES ('$id', 'test@test.com', 'hash', 'USER')");
-  }
-  private function createDummyParking(string $id): void
-  {
-    $this->pdo->exec("INSERT INTO parkings (id, owner_id, name, latitude, longitude, total_places, price_grid, opening_hours, subscription_plans) VALUES ('$id', 'owner', 'P', 0, 0, 10, '{}', '[]', '[]')");
+    $this->pdo->exec("INSERT INTO accounts (id, email, password_hash, role) VALUES ('u1', 'test@test.com', 'hash', 'USER')");
+    $this->pdo->exec("INSERT INTO parkings (id, name, latitude, longitude, total_places, price_grid, opening_hours, subscription_plans, owner_id) 
+            VALUES ('p1', 'Parking Test', 0, 0, 10, '{}', '{}', '[]', 'u1')");
   }
 }

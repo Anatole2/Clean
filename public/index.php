@@ -23,6 +23,7 @@ use App\Infrastructure\Controller\User\SearchParkingsController;
 use App\Infrastructure\Controller\User\ShowReservationFormController;
 use App\Infrastructure\Controller\User\CreateReservationController;
 use App\Infrastructure\Controller\Shared\GetParkingDetailsController;
+use App\Infrastructure\Controller\User\EnterParkingController;
 
 // --- DÉBUT DU BLOC GLOBAL ---
 try {
@@ -43,7 +44,7 @@ try {
     $r->addRoute('GET', '/parkings/new', ShowCreateParkingFormController::class);
     $r->addRoute('POST', '/parkings', CreateParkingController::class);
 
-    // Shared - Détail Parking (C'est celle-ci qui posait problème)
+    // Shared
     $r->addRoute('GET', '/parkings/{id}', GetParkingDetailsController::class);
 
     // Dashboard
@@ -62,6 +63,7 @@ try {
     $r->addRoute('GET', '/search', SearchParkingsController::class);
     $r->addRoute('GET', '/reservation/new', ShowReservationFormController::class);
     $r->addRoute('POST', '/reservation', CreateReservationController::class);
+    $r->addRoute('POST', '/parkings/{id}/enter', EnterParkingController::class);
   });
 
   // 3. ANALYSE DE L'URL (DISPATCH)
