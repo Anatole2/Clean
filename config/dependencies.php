@@ -22,6 +22,7 @@ use App\UseCase\Auth\RegisterUser\RegisterUser;
 use App\UseCase\Auth\Login\Login;
 use App\UseCase\User\SearchParkings\SearchParkings;
 use App\UseCase\User\CreateReservation\CreateReservation;
+use App\UseCase\Shared\GetParkingDetails\GetParkingDetails;
 
 // Controllers
 use App\Infrastructure\Controller\Owner\CreateParkingController;
@@ -36,6 +37,7 @@ use App\Infrastructure\Controller\Auth\LogoutController;
 use App\Infrastructure\Controller\User\SearchParkingsController;
 use App\Infrastructure\Controller\User\ShowReservationFormController;
 use App\Infrastructure\Controller\User\CreateReservationController;
+use App\Infrastructure\Controller\Shared\GetParkingDetailsController;
 
 // Twig
 use Twig\Loader\FilesystemLoader;
@@ -113,6 +115,9 @@ $c[SearchParkings::class] = fn($c) => new SearchParkings(
   $c[ParkingRepositoryInterface::class]($c)
 );
 
+$c[GetParkingDetails::class] = fn($c) => new GetParkingDetails(
+  $c[ParkingRepositoryInterface::class]($c)
+);
 
 // --- 6. Controllers ---
 $c[CreateParkingController::class] = function ($c) {
@@ -171,6 +176,11 @@ $c[ShowReservationFormController::class] = fn($c) => new ShowReservationFormCont
 
 $c[CreateReservationController::class] = fn($c) => new CreateReservationController(
   $c[CreateReservation::class]($c),
+  $c[PresenterFactory::class]($c)
+);
+
+$c[GetParkingDetailsController::class] = fn($c) => new GetParkingDetailsController(
+  $c[GetParkingDetails::class]($c),
   $c[PresenterFactory::class]($c)
 );
 
