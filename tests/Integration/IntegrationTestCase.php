@@ -40,6 +40,7 @@ abstract class IntegrationTestCase extends TestCase
     $this->pdo->exec("TRUNCATE TABLE accounts");
     $this->pdo->exec("TRUNCATE TABLE reservations");
     $this->pdo->exec("TRUNCATE TABLE user_subscriptions");
+    $this->pdo->exec("TRUNCATE TABLE parking_sessions");
     $this->pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
   }
 
@@ -60,6 +61,7 @@ abstract class IntegrationTestCase extends TestCase
     $this->pdo->exec("DROP TABLE IF EXISTS accounts");
     $this->pdo->exec("DROP TABLE IF EXISTS reservations");
     $this->pdo->exec("DROP TABLE IF EXISTS user_subscriptions");
+    $this->pdo->exec("DROP TABLE IF EXISTS parking_sessions");
     $this->pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
 
     $sql = file_get_contents($schemaPath);
