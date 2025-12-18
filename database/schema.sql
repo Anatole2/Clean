@@ -60,3 +60,21 @@ CREATE TABLE reservations (
     -- Index critique pour le calcul de chevauchement
     INDEX idx_res_overlap (parking_id, status, start_time, end_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Parking Sessions Table
+CREATE TABLE parking_sessions (
+    id CHAR(36) PRIMARY KEY,
+    parking_id CHAR(36) NOT NULL,
+    user_id CHAR(36) NOT NULL,
+    reservation_id CHAR(36) NULL,
+    entry_time DATETIME NOT NULL,
+    exit_time DATETIME DEFAULT NULL,
+    price_paid INT DEFAULT 0,
+    
+    FOREIGN KEY (parking_id) REFERENCES parkings(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES accounts(id),
+    FOREIGN KEY (reservation_id) REFERENCES reservations(id) ON DELETE SET NULL,
+
+    -- Index pour trouver rapidement les voitures "encore à l'intérieur" (exit_time IS NULL)
+    INDEX idx_session_active (parking_id, exit_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
