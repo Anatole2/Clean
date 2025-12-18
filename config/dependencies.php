@@ -30,6 +30,7 @@ use App\UseCase\User\CreateReservation\CreateReservation;
 use App\UseCase\Shared\GetParkingDetails\GetParkingDetails;
 use App\UseCase\User\EnterParking\EnterParking;
 use App\UseCase\User\ExitParking\ExitParking;
+use App\UseCase\Owner\AddParkingSubscriptionPlan\AddParkingSubscriptionPlan;
 
 // Controllers
 use App\Infrastructure\Controller\Owner\CreateParkingController;
@@ -47,6 +48,8 @@ use App\Infrastructure\Controller\User\CreateReservationController;
 use App\Infrastructure\Controller\Shared\GetParkingDetailsController;
 use App\Infrastructure\Controller\User\EnterParkingController;
 use App\Infrastructure\Controller\User\ExitParkingController;
+use App\Infrastructure\Controller\Owner\AddParkingSubscriptionPlanController;
+use App\Infrastructure\Controller\Owner\ShowAddParkingSubscriptionPlanController;
 
 // Twig
 use Twig\Loader\FilesystemLoader;
@@ -143,6 +146,10 @@ $c[ExitParking::class] = fn($c) => new ExitParking(
   $c[UserSubscriptionRepositoryInterface::class]($c)
 );
 
+$c[AddParkingSubscriptionPlan::class] = fn($c) => new AddParkingSubscriptionPlan(
+  $c[ParkingRepositoryInterface::class]($c)
+);
+
 // --- 6. Controllers ---
 $c[CreateParkingController::class] = function ($c) {
   return new CreateParkingController(
@@ -216,6 +223,19 @@ $c[EnterParkingController::class] = fn($c) => new EnterParkingController(
 $c[ExitParkingController::class] = fn($c) => new ExitParkingController(
   $c[ExitParking::class]($c)
 );
+
+$c[AddParkingSubscriptionPlanController::class] = fn($c) => new AddParkingSubscriptionPlanController(
+  $c[AddParkingSubscriptionPlan::class]($c),
+  $c[PresenterFactory::class]($c)
+);
+
+$c[ShowAddParkingSubscriptionPlanController::class] = fn($c) => new ShowAddParkingSubscriptionPlanController(
+  $c[Environment::class]($c),
+  $c[ParkingRepositoryInterface::class]($c)
+);
+
+
+
 
 // --- 7. Configuration de Twig ---
 $c[Environment::class] = function ($c) {

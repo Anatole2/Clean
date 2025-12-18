@@ -11,7 +11,7 @@ class AddParkingSubscriptionPlanResponse
 {
   public function __construct(
     public string $parkingId,
-    public array $subscriptionPlans // Retourne la liste mise à jour des plans
+    public array $subscriptionPlans,
   ) {}
 
   public static function fromParking(Parking $parking): self

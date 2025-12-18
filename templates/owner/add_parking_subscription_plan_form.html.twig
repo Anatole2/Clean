@@ -1,0 +1,224 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle Offre d'Abonnement{% endblock %}
+
+{% block body %}
+<main class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <hgroup>
+                    <h2>Créer un abonnement</h2>
+                    <h3>Pour le parking : {{ parkingName }}<br> Id : {{parkingId}}</h3>
+                </hgroup>
+                <a role="button" class="secondary outline" href="/parkings/{{ parkingId }}">
+                    ← Retour au parking
+                </a>
+            </div>
+
+            <article>
+                <form action="/parkings/{{ parkingId }}/plans" method="POST" onsubmit="return prepareForm()">
+                    
+                    <header><strong>📝 Informations Générales</strong></header>
+                    <div class="grid">
+                        <div>
+                            <label for="name">
+                                Nom de l'offre <span style="color:red">*</span>
+                                <input type="text" id="name" name="name" placeholder="Ex: Forfait Nuit & Week-end" required>
+                            </label>
+                            <small>Donnez un nom clair pour vos clients.</small>
+                        </div>
+
+                        <div>
+                            <label for="price">
+                                Prix Mensuel (€) <span style="color:red">*</span>
+                                <input type="number" step="0.01" id="price" name="price" placeholder="50.00" required>
+                            </label>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <header><strong>🕒 Créneaux horaires autorisés</strong></header>
+                    <div class="alert" style="background-color: #f0f0f0; color: #333; margin-top: 10px; padding: 10px; border-radius: 5px; margin-bottom: 20px; font-size: 0.9em;">
+                        ℹ️ Ajoutez ici les périodes récurrentes. <br>
+                        Exemple pour un forfait nuit : Du <strong>Lundi 19:00</strong> Au <strong>Mardi 08:00</strong>.
+                    </div>
+
+                    <fieldset>
+                        <div class="grid">
+                            <div>
+                                <label>Du (Jour)</label>
+                                <select id="startDay">
+                                    <option value="1">Lundi</option>
+                                    <option value="2">Mardi</option>
+                                    <option value="3">Mercredi</option>
+                                    <option value="4">Jeudi</option>
+                                    <option value="5">Vendredi</option>
+                                    <option value="6">Samedi</option>
+                                    <option value="7">Dimanche</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>À partir de (Heure)</label>
+                                <input type="time" id="startTime" value="00:00">
+                            </div>
+
+                            <div>
+                                <label>Au (Jour)</label>
+                                <select id="endDay">
+                                    <option value="1">Lundi</option>
+                                    <option value="2">Mardi</option>
+                                    <option value="3">Mercredi</option>
+                                    <option value="4">Jeudi</option>
+                                    <option value="5">Vendredi</option>
+                                    <option value="6">Samedi</option>
+                                    <option value="7" selected>Dimanche</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>Jusqu'à (Heure)</label>
+                                <input type="time" id="endTime" value="23:59">
+                            </div>
+                        </div>
+                        
+                        <button type="button" onclick="addSlot()" class="secondary" style="width: 100%; margin-top: 10px;">
+                            ⬇️ Ajouter ce créneau à la liste
+                        </button>
+                    </fieldset>
+
+                    <table role="grid" style="margin-top: 30px;">
+                        <thead>
+                            <tr>
+                                <th>Début</th>
+                                <th>Fin</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="slotsListBody">
+                            </tbody>
+                    </table>
+
+                    <div id="hiddenScheduleContainer"></div>
+
+                    <hr>
+
+                    <div class="grid">
+                        <button type="submit">✅ Enregistrer l'abonnement</button>
+                    </div>
+                </form>
+            </article>
+
+        </div>
+    </div>
+</main>
+
+<script>
+    // --- VARIABLES GLOBALES ---
+    let scheduleSlots = []; 
+    const dayNames = {1: 'Lundi', 2: 'Mardi', 3: 'Mercredi', 4: 'Jeudi', 5: 'Vendredi', 6: 'Samedi', 7: 'Dimanche'};
+
+    // --- LOGIQUE D'AJOUT ---
+    function addSlot() {
+        const startDaySelect = document.getElementById('startDay');
+        const startTimeInput = document.getElementById('startTime');
+        const endDaySelect = document.getElementById('endDay');
+        const endTimeInput = document.getElementById('endTime');
+
+        const sDay = parseInt(startDaySelect.value);
+        const sTime = startTimeInput.value;
+        const eDay = parseInt(endDaySelect.value);
+        const eTime = endTimeInput.value;
+
+        if (!sTime || !eTime) {
+            alert("Veuillez définir les heures.");
+            return;
+        }
+
+        // Création de l'objet
+        const newSlot = {
+            id: Date.now(),
+            startDay: sDay,
+            startTime: sTime,
+            endDay: eDay,
+            endTime: eTime
+        };
+
+        scheduleSlots.push(newSlot);
+        
+        // Tri intelligent : Par jour de début, puis heure de début
+        scheduleSlots.sort((a, b) => {
+            if (a.startDay !== b.startDay) return a.startDay - b.startDay;
+            return a.startTime.localeCompare(b.startTime);
+        });
+
+        renderSlots();
+    }
+
+    // --- LOGIQUE DE SUPPRESSION ---
+    function removeSlot(id) {
+        scheduleSlots = scheduleSlots.filter(slot => slot.id !== id);
+        renderSlots();
+    }
+
+    // --- LOGIQUE D'AFFICHAGE ---
+    function renderSlots() {
+        const tbody = document.getElementById('slotsListBody');
+        tbody.innerHTML = '';
+
+        if (scheduleSlots.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:gray;">Aucun créneau défini. Ajoutez-en un ci-dessus.</td></tr>';
+            return;
+        }
+
+        scheduleSlots.forEach(slot => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${dayNames[slot.startDay]} à ${slot.startTime}</td>
+                <td>${dayNames[slot.endDay]} à ${slot.endTime}</td>
+                <td style="text-align: right;">
+                    <a href="#" role="button" class="outline contrast" style="padding: 5px 10px; font-size: 0.8em; border-color: red; color: red;" onclick="removeSlot(${slot.id}); return false;">
+                        Supprimer
+                    </a>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // --- PREPARATION AVANT ENVOI (CRUCIAL) ---
+    function prepareForm() {
+        const container = document.getElementById('hiddenScheduleContainer');
+        container.innerHTML = ''; // Reset
+
+        if (scheduleSlots.length === 0) {
+            alert("Veuillez ajouter au moins un créneau horaire (ex: Lundi 00:00 au Dimanche 23:59 pour 24/7).");
+            return false;
+        }
+
+        // On transforme le tableau JS en inputs HTML que PHP pourra lire comme $_POST['schedule']
+        scheduleSlots.forEach((slot, index) => {
+            createHiddenInput(container, `schedule[${index}][startDay]`, slot.startDay);
+            createHiddenInput(container, `schedule[${index}][startTime]`, slot.startTime);
+            createHiddenInput(container, `schedule[${index}][endDay]`, slot.endDay);
+            createHiddenInput(container, `schedule[${index}][endTime]`, slot.endTime);
+        });
+
+        return true;
+    }
+
+    function createHiddenInput(container, name, value) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        container.appendChild(input);
+    }
+
+    // Init
+    window.onload = function() {
+        renderSlots();
+    };
+</script>
+{% endblock %}

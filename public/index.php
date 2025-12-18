@@ -25,6 +25,8 @@ use App\Infrastructure\Controller\User\CreateReservationController;
 use App\Infrastructure\Controller\Shared\GetParkingDetailsController;
 use App\Infrastructure\Controller\User\EnterParkingController;
 use App\Infrastructure\Controller\User\ExitParkingController;
+use App\Infrastructure\Controller\Owner\ShowAddParkingSubscriptionPlanController;
+use App\Infrastructure\Controller\Owner\AddParkingSubscriptionPlanController;
 
 // --- DÉBUT DU BLOC GLOBAL ---
 try {
@@ -44,6 +46,8 @@ try {
     // Owner
     $r->addRoute('GET', '/parkings/new', ShowCreateParkingFormController::class);
     $r->addRoute('POST', '/parkings', CreateParkingController::class);
+    $r->addRoute('GET', '/parkings/{id}/plans/new', ShowAddParkingSubscriptionPlanController::class);
+    $r->addRoute('POST', '/parkings/{id}/plans', AddParkingSubscriptionPlanController::class);
 
     // Shared
     $r->addRoute('GET', '/parkings/{id}', GetParkingDetailsController::class);
