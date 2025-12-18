@@ -20,4 +20,6 @@ interface UserSubscriptionRepositoryInterface
     DateTimeImmutable $start,
     DateTimeImmutable $end
   ): array;
+
+  public function findActiveForUser(string $userId, string $parkingId, \DateTimeImmutable $now): ?\App\Domain\Entity\UserSubscription;
 }

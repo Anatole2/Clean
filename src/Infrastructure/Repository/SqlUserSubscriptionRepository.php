@@ -35,8 +35,6 @@ class SqlUserSubscriptionRepository implements UserSubscriptionRepositoryInterfa
 
   public function findActiveOverlappingRange(string $parkingId, DateTimeImmutable $start, DateTimeImmutable $end): array
   {
-    // On cherche les abonnements qui sont actifs DANS les dates demandées.
-    // (DateDebut_Abo <= DateFin_Demande) ET (DateFin_Abo >= DateDebut_Demande)
     $sql = "SELECT * FROM user_subscriptions 
                 WHERE parking_id = :pid 
                 AND is_active = 1
@@ -51,15 +49,48 @@ class SqlUserSubscriptionRepository implements UserSubscriptionRepositoryInterfa
     ]);
 
     $results = [];
-    while ($row = $stmt->fetch()) {
-      $results[] = $this->mapRowToEntity($row);
+    while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+      // CORRECTION : On utilise hydrate ici aussi
+      $results[] = $this->hydrate($row);
     }
     return $results;
   }
 
-  private function mapRowToEntity(array $row): UserSubscription
+  public function findActiveForUser(string $userId, string $parkingId, \DateTimeImmutable $now): ?\App\Domain\Entity\UserSubscription
   {
-    // 1. Décodage du JSON pour reconstruire le VO WeeklySchedule
+    $stmt = $this->connection->prepare("
+            SELECT * FROM user_subscriptions 
+            WHERE user_id = :userId 
+            AND parking_id = :parkingId
+            AND is_active = 1
+            AND start_date <= :now 
+            AND end_date > :now
+            LIMIT 1 
+        ");
+
+    $stmt->execute([
+      'userId' => $userId,
+      'parkingId' => $parkingId,
+      'now' => $now->format('Y-m-d H:i:s')
+    ]);
+
+    $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+    foreach ($rows as $row) {
+      // CORRECTION : hydrate est maintenant bien défini
+      $sub = $this->hydrate($row);
+
+      // Vérification logicielle des horaires (Schedule)
+      if ($sub->occupiesSpotAt($now)) {
+        return $sub;
+      }
+    }
+
+    return null;
+  }
+
+  private function hydrate(array $row): UserSubscription
+  {
     $scheduleConfig = json_decode($row['schedule_json'] ?? '[]', true) ?: [];
     $schedule = new WeeklySchedule($scheduleConfig);
 

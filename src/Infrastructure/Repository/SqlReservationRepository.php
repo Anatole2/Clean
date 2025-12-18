@@ -32,8 +32,6 @@ class SqlReservationRepository implements ReservationRepositoryInterface
 
   public function countOverlappingReservations(string $parkingId, DateTimeImmutable $start, DateTimeImmutable $end): int
   {
-    // Logique SQL : Une période A chevauche une période B si :
-    // (Debut_A < Fin_B) ET (Fin_A > Debut_B)
     $sql = "SELECT COUNT(*) FROM reservations 
                 WHERE parking_id = :pid
                 AND status = 'CONFIRMED'
@@ -48,5 +46,42 @@ class SqlReservationRepository implements ReservationRepositoryInterface
     ]);
 
     return (int)$stmt->fetchColumn();
+  }
+
+  public function findActiveForUser(string $userId, string $parkingId, \DateTimeImmutable $now): ?\App\Domain\Entity\Reservation
+  {
+    $stmt = $this->connection->prepare("
+            SELECT * FROM reservations 
+            WHERE user_id = :userId 
+            AND parking_id = :parkingId
+            AND status = 'CONFIRMED'
+            AND start_time <= :now 
+            AND end_time > :now
+            LIMIT 1
+        ");
+
+    $stmt->execute([
+      'userId' => $userId,
+      'parkingId' => $parkingId,
+      'now' => $now->format('Y-m-d H:i:s')
+    ]);
+
+    $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+    // CORRECTION : Appel à la méthode qu'on définit juste en dessous
+    return $row ? $this->hydrate($row) : null;
+  }
+
+  private function hydrate(array $row): Reservation
+  {
+    return new Reservation(
+      $row['id'],
+      $row['user_id'],
+      $row['parking_id'],
+      new DateTimeImmutable($row['start_time']),
+      new DateTimeImmutable($row['end_time']),
+      (int) $row['price_paid'],
+      $row['status'] ?? 'CONFIRMED'
+    );
   }
 }
