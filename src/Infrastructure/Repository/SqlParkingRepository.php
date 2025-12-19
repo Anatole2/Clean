@@ -104,7 +104,7 @@ class SqlParkingRepository implements ParkingRepositoryInterface
         $data['id'],
         $data['name'],
         (int)$data['price'],
-        new WeeklySchedule($data['rule'])
+        new WeeklySchedule($data['schedule'])
       );
     }, $rawPlans);
 

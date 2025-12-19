@@ -177,7 +177,7 @@ class SqlParkingRepositoryTest extends IntegrationTestCase
   {
     // 1. Création d'un plan "Nuit"
     $nightRule = new WeeklySchedule([['startDay' => 1, 'startTime' => '18:00', 'endDay' => 2, 'endTime' => '08:00']]);
-    $plan = new \App\Domain\ValueObject\SubscriptionPlan("Forfait Nuit", 5000, $nightRule);
+    $plan = new \App\Domain\ValueObject\SubscriptionPlan('plan-1', "Forfait Nuit", 5000, $nightRule);
 
     // 2. Création du parking avec ce plan
     $parking = new Parking(
@@ -188,7 +188,7 @@ class SqlParkingRepositoryTest extends IntegrationTestCase
       10,
       new PriceGrid([60 => 1]),
       new WeeklySchedule([]),
-      [$plan] // 👈 On injecte le plan
+      [$plan]
     );
 
     // 3. Sauvegarde
@@ -199,8 +199,13 @@ class SqlParkingRepositoryTest extends IntegrationTestCase
 
     // 5. Vérifications
     $this->assertCount(1, $saved->getSubscriptionPlans());
-    $this->assertEquals("Forfait Nuit", $saved->getSubscriptionPlans()[0]->getName());
-    $this->assertEquals(5000, $saved->getSubscriptionPlans()[0]->getMonthlyPrice());
+
+    // On récupère le plan pour simplifier la lecture
+    $plan = $saved->getSubscriptionPlans()[0];
+
+    $this->assertEquals("plan-1", $plan->getId());        // Vérifie l'ID
+    $this->assertEquals("Forfait Nuit", $plan->getName()); // Vérifie le Nom
+    $this->assertEquals(5000, $plan->getMonthlyPrice());
   }
   public function testFindByOwnerIdReturnsOnlyMatchingParkings(): void
   {
@@ -233,7 +238,7 @@ class SqlParkingRepositoryTest extends IntegrationTestCase
       'Parking B',
       new GpsCoordinates(48.1, 2.1),
       200,
-      $dummyPriceGrid, // ✅ On passe une grille valide
+      $dummyPriceGrid,
       $dummySchedule,
       []
     );
@@ -246,7 +251,7 @@ class SqlParkingRepositoryTest extends IntegrationTestCase
       'Parking Intruder',
       new GpsCoordinates(49.0, 3.0),
       50,
-      $dummyPriceGrid, // ✅ On passe une grille valide
+      $dummyPriceGrid,
       $dummySchedule,
       []
     );

@@ -10,7 +10,7 @@ class SubscriptionPlan
     private string $id,               // ex: 1
     private string $name,           // ex: "Forfait Nuit"
     private int $monthlyPrice,      // ex: 5000 (en centimes = 50.00€)
-    private WeeklySchedule $rule    // ex: Créneaux de 18h à 08h
+    private WeeklySchedule $schedule    // ex: Créneaux de 18h à 08h
   ) {}
 
   public function getId(): string
@@ -25,9 +25,9 @@ class SubscriptionPlan
   {
     return $this->monthlyPrice;
   }
-  public function getRule(): WeeklySchedule
+  public function getSchedule(): WeeklySchedule
   {
-    return $this->rule;
+    return $this->schedule;
   }
 
   public function toArray(): array
@@ -36,7 +36,7 @@ class SubscriptionPlan
       'id' => $this->id,
       'name' => $this->name,
       'price' => $this->monthlyPrice,
-      'rule' => $this->rule->toArray() // On sauvegarde aussi la règle
+      'schedule' => $this->schedule->toArray() // On sauvegarde aussi la règle
     ];
   }
 }

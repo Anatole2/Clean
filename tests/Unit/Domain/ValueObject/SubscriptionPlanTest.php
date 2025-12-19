@@ -11,21 +11,22 @@ class SubscriptionPlanTest extends TestCase
   public function testItCreatesAValidPlan(): void
   {
     // 1. ARRANGEMENT
-    // On crée une règle "Nuit" (18h-08h)
     $nightRule = new WeeklySchedule([
       ['startDay' => 1, 'startTime' => '18:00', 'endDay' => 2, 'endTime' => '08:00']
     ]);
 
+    $id = "plan_123";
     $name = "Forfait Nuit";
-    $price = 5000; // 50.00€
+    $price = 5000;
 
     // 2. ACTION
-    $plan = new SubscriptionPlan($name, $price, $nightRule);
+    $plan = new SubscriptionPlan($id, $name, $price, $nightRule);
 
     // 3. ASSERTION
+    $this->assertEquals($id, $plan->getId());
     $this->assertEquals($name, $plan->getName());
     $this->assertEquals($price, $plan->getMonthlyPrice());
-    $this->assertSame($nightRule, $plan->getRule());
+    $this->assertSame($nightRule, $plan->getSchedule());
   }
 
   public function testToArrayReturnsSerializableFormat(): void
@@ -36,17 +37,17 @@ class SubscriptionPlanTest extends TestCase
     ];
     $weekendRule = new WeeklySchedule($scheduleConfig);
 
-    $plan = new SubscriptionPlan("Forfait Week-End", 4500, $weekendRule);
+    $plan = new SubscriptionPlan("plan_we", "Forfait Week-End", 4500, $weekendRule);
 
     // 2. ACTION
     $arrayResult = $plan->toArray();
 
     // 3. ASSERTION
-    // On vérifie la structure exacte du tableau (utile pour le json_encode plus tard)
     $expected = [
+      'id' => "plan_we",
       'name' => "Forfait Week-End",
       'price' => 4500,
-      'rule' => $scheduleConfig // Vérifie que le WeeklySchedule a bien été converti en tableau
+      'schedule' => $scheduleConfig
     ];
 
     $this->assertSame($expected, $arrayResult);

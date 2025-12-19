@@ -16,20 +16,24 @@ class SqlUserSubscriptionRepository implements UserSubscriptionRepositoryInterfa
 
   public function save(UserSubscription $subscription): void
   {
-    $sql = "INSERT INTO user_subscriptions 
-                (id, user_id, parking_id, plan_id, start_date, end_date, schedule_json, is_active)
-                VALUES (:id, :uid, :pid, :plan, :start, :end, :schedule, :active)";
+    $stmt = $this->connection->prepare("
+            INSERT INTO user_subscriptions 
+            (id, user_id, parking_id, plan_id, plan_name, price, start_date, end_date, schedule_json, is_active, created_at)
+            VALUES 
+            (:id, :user_id, :parking_id, :plan_id, :plan_name, :price, :start_date, :end_date, :schedule, :is_active, NOW())
+        ");
 
-    $stmt = $this->connection->prepare($sql);
     $stmt->execute([
       'id' => $subscription->getId(),
-      'uid' => $subscription->getUserId(),
-      'pid' => $subscription->getParkingId(),
-      'plan' => $subscription->getPlanId(),
-      'start' => $subscription->getStartDate()->format('Y-m-d H:i:s'),
-      'end' => $subscription->getEndDate()->format('Y-m-d H:i:s'),
+      'user_id' => $subscription->getUserId(),
+      'parking_id' => $subscription->getParkingId(),
+      'plan_id' => $subscription->getPlanId(),
+      'plan_name' => $subscription->getPlanName(),
+      'price' => $subscription->getPrice(),
+      'start_date' => $subscription->getStartDate()->format('Y-m-d H:i:s'),
+      'end_date' => $subscription->getEndDate()->format('Y-m-d H:i:s'),
       'schedule' => json_encode($subscription->getSchedule()->toArray()),
-      'active' => $subscription->isActive() ? 1 : 0
+      'is_active' => $subscription->isActive() ? 1 : 0
     ]);
   }
 
@@ -88,7 +92,37 @@ class SqlUserSubscriptionRepository implements UserSubscriptionRepositoryInterfa
 
     return null;
   }
+  public function countActiveForParking(string $parkingId, DateTimeImmutable $start, DateTimeImmutable $end): int
+  {
+    // On compte les abonnements dont la période chevauche [start, end]
+    // (Debut_Sub < Fin_Req) ET (Fin_Sub > Debut_Req)
+    $sql = "SELECT COUNT(*) FROM user_subscriptions 
+                WHERE parking_id = :pid 
+                AND is_active = 1
+                AND start_date < :end_req 
+                AND end_date > :start_req";
 
+    $stmt = $this->connection->prepare($sql);
+    $stmt->execute([
+      'pid' => $parkingId,
+      'start_req' => $start->format('Y-m-d H:i:s'),
+      'end_req' => $end->format('Y-m-d H:i:s')
+    ]);
+
+    return (int) $stmt->fetchColumn();
+  }
+
+  public function findByUserId(string $userId): array
+  {
+    $stmt = $this->connection->prepare("SELECT * FROM user_subscriptions WHERE user_id = :uid ORDER BY start_date DESC");
+    $stmt->execute(['uid' => $userId]);
+
+    $results = [];
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+      $results[] = $this->hydrate($row);
+    }
+    return $results;
+  }
   private function hydrate(array $row): UserSubscription
   {
     $scheduleConfig = json_decode($row['schedule_json'] ?? '[]', true) ?: [];
@@ -99,6 +133,8 @@ class SqlUserSubscriptionRepository implements UserSubscriptionRepositoryInterfa
       $row['user_id'],
       $row['parking_id'],
       $row['plan_id'],
+      $row['plan_name'],
+      $row['price'],
       new DateTimeImmutable($row['start_date']),
       new DateTimeImmutable($row['end_date']),
       $schedule,

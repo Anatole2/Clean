@@ -30,6 +30,8 @@ class SqlUserSubscriptionRepositoryTest extends IntegrationTestCase
       'u1',
       'p1',
       'plan-1',
+      'plan-name-1',
+      5000,
       new DateTimeImmutable('2025-01-01'),
       new DateTimeImmutable('2025-01-31'),
       $schedule,
@@ -42,7 +44,6 @@ class SqlUserSubscriptionRepositoryTest extends IntegrationTestCase
     $this->assertCount(1, $found);
   }
 
-  // 👇 NOUVEAU TEST : Vérifie le filtrage précis des jours
   public function testFindActiveForUserRespectsWeeklySchedule(): void
   {
     // ARRANGE
@@ -58,6 +59,8 @@ class SqlUserSubscriptionRepositoryTest extends IntegrationTestCase
       'u1',
       'p1',
       'plan-1',
+      'plan-name-1',
+      5000,
       new DateTimeImmutable('2025-01-01 00:00'),
       new DateTimeImmutable('2025-01-31 23:59'),
       $schedule,
@@ -83,7 +86,6 @@ class SqlUserSubscriptionRepositoryTest extends IntegrationTestCase
     $this->assertNull($notFoundDay, "Ne devrait pas trouver car ce n'est pas un lundi");
   }
 
-  // 👇 NOUVEAU TEST : Vérifie le flag is_active
   public function testFindActiveForUserReturnsNullIfInactive(): void
   {
     $schedule = new WeeklySchedule([]); // H24
@@ -92,6 +94,8 @@ class SqlUserSubscriptionRepositoryTest extends IntegrationTestCase
       'u1',
       'p1',
       'plan-1',
+      'plan-name-1',
+      5000,
       new DateTimeImmutable('2025-01-01'),
       new DateTimeImmutable('2025-01-31'),
       $schedule,
@@ -105,10 +109,146 @@ class SqlUserSubscriptionRepositoryTest extends IntegrationTestCase
     $this->assertNull($found);
   }
 
+  public function testCountActiveForParking(): void
+  {
+    // ARRANGE : On crée 2 abonnements qui se chevauchent sur Janvier
+    $schedule = new WeeklySchedule([]); // H24
+
+    $sub1 = new UserSubscription(
+      'sub-1',
+      'u1',
+      'p1',
+      'plan-1',
+      'Plan A',
+      5000,
+      new DateTimeImmutable('2025-01-01'),
+      new DateTimeImmutable('2025-01-31'),
+      $schedule
+    );
+
+    $sub2 = new UserSubscription(
+      'sub-2',
+      'u2',
+      'p1',
+      'plan-1',
+      'Plan A',
+      5000,
+      new DateTimeImmutable('2025-01-15'), // Commence au milieu du mois
+      new DateTimeImmutable('2025-02-15'),
+      $schedule
+    );
+
+    // Un abonnement inactif (ne doit pas compter)
+    $subInactive = new UserSubscription(
+      'sub-3',
+      'u3',
+      'p1',
+      'plan-1',
+      'Plan A',
+      5000,
+      new DateTimeImmutable('2025-01-01'),
+      new DateTimeImmutable('2025-01-31'),
+      $schedule,
+      false // Inactif
+    );
+
+    $this->repo->save($sub1);
+    $this->repo->save($sub2);
+    $this->repo->save($subInactive);
+
+    // ACT & ASSERT
+
+    // Période couvrant tout Janvier : Doit trouver sub1 et sub2 (2 actifs)
+    $count = $this->repo->countActiveForParking(
+      'p1',
+      new DateTimeImmutable('2025-01-01'),
+      new DateTimeImmutable('2025-01-31')
+    );
+    $this->assertEquals(2, $count);
+
+    // Période en Mars : 0 abonnement
+    $countEmpty = $this->repo->countActiveForParking(
+      'p1',
+      new DateTimeImmutable('2025-03-01'),
+      new DateTimeImmutable('2025-03-31')
+    );
+    $this->assertEquals(0, $countEmpty);
+  }
+
+  public function testFindByUserId(): void
+  {
+    $schedule = new WeeklySchedule([]);
+
+    // Abonnement pour User 1 (Récent)
+    $sub1 = new UserSubscription(
+      'sub-u1-recent',
+      'u1',
+      'p1',
+      'plan-1',
+      'Plan A',
+      5000,
+      new DateTimeImmutable('2025-02-01'), // Février
+      new DateTimeImmutable('2025-02-28'),
+      $schedule
+    );
+
+    // Abonnement pour User 1 (Vieux)
+    $sub2 = new UserSubscription(
+      'sub-u1-old',
+      'u1',
+      'p1',
+      'plan-1',
+      'Plan A',
+      5000,
+      new DateTimeImmutable('2025-01-01'), // Janvier
+      new DateTimeImmutable('2025-01-31'),
+      $schedule
+    );
+
+    // Abonnement pour User 2 (Intrus)
+    $sub3 = new UserSubscription(
+      'sub-u2',
+      'u2',
+      'p1',
+      'plan-1',
+      'Plan A',
+      5000,
+      new DateTimeImmutable('2025-01-01'),
+      new DateTimeImmutable('2025-01-31'),
+      $schedule
+    );
+
+    $this->repo->save($sub1);
+    $this->repo->save($sub2);
+    $this->repo->save($sub3);
+
+    // ACT
+    $results = $this->repo->findByUserId('u1');
+
+    // ASSERT
+    $this->assertCount(2, $results);
+
+    // Vérifie l'ordre (ORDER BY start_date DESC dans ta requête SQL)
+    // Le plus récent (Février) doit être en premier
+    $this->assertEquals('sub-u1-recent', $results[0]->getId());
+    $this->assertEquals('sub-u1-old', $results[1]->getId());
+  }
   private function createDummyData(): void
   {
+    // Nettoyage (si nécessaire selon ta config, sinon ignore les DELETE)
+    $this->pdo->exec("DELETE FROM user_subscriptions");
+    $this->pdo->exec("DELETE FROM parkings");
+    $this->pdo->exec("DELETE FROM accounts");
+
+    // 1. Création de l'utilisateur principal
     $this->pdo->exec("INSERT INTO accounts (id, email, password_hash, role) VALUES ('u1', 'test@test.com', 'hash', 'USER')");
+
+    // 2. AJOUT : Création des utilisateurs supplémentaires pour les tests
+    $this->pdo->exec("INSERT INTO accounts (id, email, password_hash, role) VALUES ('u2', 'other@test.com', 'hash', 'USER')");
+    $this->pdo->exec("INSERT INTO accounts (id, email, password_hash, role) VALUES ('u3', 'third@test.com', 'hash', 'USER')");
+
+    // 3. Création du parking
     $this->pdo->exec("INSERT INTO parkings (id, name, latitude, longitude, total_places, price_grid, opening_hours, subscription_plans, owner_id) 
-            VALUES ('p1', 'Parking Test', 0, 0, 10, '{}', '{}', '[]', 'u1')");
+            VALUES ('p1', 'Parking Test', 0, 0, 10, '{}', '[]', '[]', 'u1')");
   }
 }

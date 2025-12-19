@@ -22,4 +22,11 @@ interface UserSubscriptionRepositoryInterface
   ): array;
 
   public function findActiveForUser(string $userId, string $parkingId, \DateTimeImmutable $now): ?\App\Domain\Entity\UserSubscription;
+  /**
+   * Compte le nombre d'abonnements qui chevauchent la période donnée pour un parking.
+   */
+  public function countActiveForParking(string $parkingId, DateTimeImmutable $start, DateTimeImmutable $end): int;
+
+  // Tu auras sans doute besoin de ça plus tard pour l'espace User :
+  public function findByUserId(string $userId): array;
 }

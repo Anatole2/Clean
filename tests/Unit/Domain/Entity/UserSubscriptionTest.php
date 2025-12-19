@@ -25,7 +25,9 @@ class UserSubscriptionTest extends TestCase
       'sub-123',
       'user-1',
       'park-1',
+      'plan-1',
       'plan-gold',
+      5000,
       $start,
       $end,
       $schedule,
@@ -35,7 +37,9 @@ class UserSubscriptionTest extends TestCase
     $this->assertEquals('sub-123', $subscription->getId());
     $this->assertEquals('user-1', $subscription->getUserId());
     $this->assertEquals('park-1', $subscription->getParkingId());
-    $this->assertEquals('plan-gold', $subscription->getPlanId());
+    $this->assertEquals('plan-1', $subscription->getPlanId());
+    $this->assertEquals('plan-gold', $subscription->getPlanName());
+    $this->assertEquals(5000, $subscription->getPrice());
     $this->assertSame($start, $subscription->getStartDate());
     $this->assertSame($end, $subscription->getEndDate());
     $this->assertSame($schedule, $subscription->getSchedule());
@@ -57,7 +61,7 @@ class UserSubscriptionTest extends TestCase
     $start = new DateTimeImmutable('2024-01-01'); // Début contrat
     $end = new DateTimeImmutable('2024-01-31');   // Fin contrat
 
-    $sub = new UserSubscription('s1', 'u1', 'p1', 'plan-nuit', $start, $end, $nightSchedule);
+    $sub = new UserSubscription('s1', 'u1', 'p1', 'plan-1', 'plan-nuit', 4000, $start, $end, $nightSchedule);
 
     // CAS 1 : C'est OUI (Lundi 1er Janvier à 20h00 - Dans les dates ET dans l'horaire nuit)
     $mondayNight = new DateTimeImmutable('2024-01-01 20:00');
@@ -81,7 +85,7 @@ class UserSubscriptionTest extends TestCase
     $end = new DateTimeImmutable('2024-12-31');
 
     // ... MAIS désactivé (isActive = false)
-    $sub = new UserSubscription('s1', 'u1', 'p1', 'pA', $start, $end, $schedule, false);
+    $sub = new UserSubscription('s1', 'u1', 'p1', 'pl1', 'plA', 3000, $start, $end, $schedule, false);
 
     $this->assertFalse($sub->occupiesSpotAt(new DateTimeImmutable('2024-06-01')), "Un abonnement inactif ne doit jamais prendre de place");
   }
@@ -94,6 +98,6 @@ class UserSubscriptionTest extends TestCase
     $start = new DateTimeImmutable('2024-01-31');
     $end = new DateTimeImmutable('2024-01-01'); // Fin AVANT début
 
-    new UserSubscription('id', 'u', 'p', 'pl', $start, $end, new WeeklySchedule([]));
+    new UserSubscription('id', 'u', 'p', 'pl1', 'pl', 7000, $start, $end, new WeeklySchedule([]));
   }
 }

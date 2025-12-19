@@ -15,6 +15,8 @@ class UserSubscription
     private string $userId,
     private string $parkingId,
     private string $planId,
+    private string $planName,
+    private int $price,
     private DateTimeImmutable $startDate,
     private DateTimeImmutable $endDate,
     private WeeklySchedule $schedule,
@@ -62,6 +64,14 @@ class UserSubscription
   public function getPlanId(): string
   {
     return $this->planId;
+  }
+  public function getPlanName(): string
+  {
+    return $this->planName;
+  }
+  public function getPrice(): int
+  {
+    return $this->price;
   }
   public function getStartDate(): DateTimeImmutable
   {
