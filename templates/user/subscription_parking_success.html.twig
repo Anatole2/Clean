@@ -1,0 +1,26 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Abonnement Confirmé{% endblock %}
+
+{% block body %}
+<main class="container">
+    <div class="grid">
+        <article>
+            <header style="background-color: #e6fcf5; color: #087f5b;">
+                <strong>🎉 Félicitations ! Votre abonnement est actif.</strong>
+            </header>
+            
+            <h3>{{ subscription.planName }}</h3>
+            <p>
+                Valable du <strong>{{ subscription.startDate|date('d/m/Y') }}</strong> 
+                au <strong>{{ subscription.endDate|date('d/m/Y') }}</strong>.
+            </p>
+            <p>Prix payé : {{ subscription.price / 100 }} €</p>
+
+            <footer>
+                <a role="button" class="secondary" href="/parkings/{{ subscription.parkingId }}">Retour au parking</a>
+            </footer>
+        </article>
+    </div>
+</main>
+{% endblock %}
