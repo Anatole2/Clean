@@ -71,7 +71,7 @@ try {
     $r->addRoute('POST', '/reservation', CreateReservationController::class);
     $r->addRoute('POST', '/parkings/{id}/enter', EnterParkingController::class);
     $r->addRoute('POST', '/parkings/{id}/exit', ExitParkingController::class);
-    $r->addRoute('POST', '/parkings/{id}/subscribe', SubscribeToParkingPlanController::class);
+    $r->addRoute('POST', '/parkings/{parkingId}/subscribe', SubscribeToParkingPlanController::class);
   });
 
   // 3. ANALYSE DE L'URL (DISPATCH)
