@@ -31,6 +31,7 @@ use App\UseCase\Shared\GetParkingDetails\GetParkingDetails;
 use App\UseCase\User\EnterParking\EnterParking;
 use App\UseCase\User\ExitParking\ExitParking;
 use App\UseCase\Owner\AddParkingSubscriptionPlan\AddParkingSubscriptionPlan;
+use App\UseCase\User\SubscribeToParkingPlan\SubscribeToParkingPlan;
 
 // Controllers
 use App\Infrastructure\Controller\Owner\CreateParkingController;
@@ -50,6 +51,7 @@ use App\Infrastructure\Controller\User\EnterParkingController;
 use App\Infrastructure\Controller\User\ExitParkingController;
 use App\Infrastructure\Controller\Owner\AddParkingSubscriptionPlanController;
 use App\Infrastructure\Controller\Owner\ShowAddParkingSubscriptionPlanController;
+use App\Infrastructure\Controller\User\SubscribeToParkingPlanController;
 
 // Twig
 use Twig\Loader\FilesystemLoader;
@@ -150,6 +152,12 @@ $c[AddParkingSubscriptionPlan::class] = fn($c) => new AddParkingSubscriptionPlan
   $c[ParkingRepositoryInterface::class]($c)
 );
 
+$c[SubscribeToParkingPlan::class] = fn($c) => new SubscribeToParkingPlan(
+  $c[ParkingRepositoryInterface::class]($c),
+  $c[UserSubscriptionRepositoryInterface::class]($c),
+  $c[RamseyIdGenerator::class]($c)
+);
+
 // --- 6. Controllers ---
 $c[CreateParkingController::class] = function ($c) {
   return new CreateParkingController(
@@ -234,7 +242,11 @@ $c[ShowAddParkingSubscriptionPlanController::class] = fn($c) => new ShowAddParki
   $c[ParkingRepositoryInterface::class]($c)
 );
 
-
+$c[SubscribeToParkingPlanController::class] = fn($c) => new SubscribeToParkingPlanController(
+  $c[SubscribeToParkingPlan::class]($c),
+  $c[PresenterFactory::class]($c),
+  $c[Environment::class]($c)
+);
 
 
 // --- 7. Configuration de Twig ---

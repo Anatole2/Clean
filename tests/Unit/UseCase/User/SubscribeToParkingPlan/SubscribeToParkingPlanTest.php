@@ -48,6 +48,7 @@ class SubscribeToParkingPlanTest extends TestCase
     $parkingId = 'parking-abc';
     $userId = 'user-007';
     $startDateStr = (new DateTimeImmutable('+1 day'))->format('Y-m-d'); // Demain
+    $endDateStr = (new DateTimeImmutable('+1 month +1 day'))->format('Y-m-d');
 
     // Création d'un parking fictif avec 1 plan
     $plan = new SubscriptionPlan($planId, 'Forfait Gold', 5000, new WeeklySchedule([]));
@@ -72,7 +73,7 @@ class SubscribeToParkingPlanTest extends TestCase
       ->method('save')
       ->with($this->isInstanceOf(UserSubscription::class));
 
-    $request = new SubscribeToParkingPlanRequest($userId, $parkingId, $planId, $startDateStr);
+    $request = new SubscribeToParkingPlanRequest($userId, $parkingId, $planId, $startDateStr, $endDateStr);
 
     // ACT
     $response = $this->useCase->execute($request);
@@ -93,7 +94,7 @@ class SubscribeToParkingPlanTest extends TestCase
     $this->expectException(\Exception::class);
     $this->expectExceptionMessage("Parking introuvable.");
 
-    $request = new SubscribeToParkingPlanRequest('u1', 'bad-parking-id', 'p1', '2025-01-01');
+    $request = new SubscribeToParkingPlanRequest('u1', 'bad-parking-id', 'p1', '2025-01-01', '2025-02-01');
     $this->useCase->execute($request);
   }
 
@@ -104,9 +105,9 @@ class SubscribeToParkingPlanTest extends TestCase
     $this->parkingRepository->method('findById')->willReturn($parking);
 
     $this->expectException(\Exception::class);
-    $this->expectExceptionMessage("Le plan d'abonnement 'unknown-plan' n'existe pas pour ce parking.");
+    $this->expectExceptionMessage("Le plan d'abonnement 'unknown-plan' n'existe pas.");
 
-    $request = new SubscribeToParkingPlanRequest('u1', 'p1', 'unknown-plan', '2025-01-01');
+    $request = new SubscribeToParkingPlanRequest('u1', 'p1', 'unknown-plan', '2025-01-01', '2025-02-01');
     $this->useCase->execute($request);
   }
 
@@ -122,7 +123,7 @@ class SubscribeToParkingPlanTest extends TestCase
 
     // Date : Hier
     $pastDate = (new DateTimeImmutable('-1 day'))->format('Y-m-d');
-    $request = new SubscribeToParkingPlanRequest('u1', 'p1', 'plan-1', $pastDate);
+    $request = new SubscribeToParkingPlanRequest('u1', 'p1', 'plan-1', $pastDate, '2025-12-31');
 
     $this->useCase->execute($request);
   }
@@ -136,7 +137,7 @@ class SubscribeToParkingPlanTest extends TestCase
     $this->expectException(\Exception::class);
     $this->expectExceptionMessage("Format de date invalide");
 
-    $request = new SubscribeToParkingPlanRequest('u1', 'p1', 'plan-1', 'not-a-date');
+    $request = new SubscribeToParkingPlanRequest('u1', 'p1', 'plan-1', 'not-a-date', 'not-a-date');
     $this->useCase->execute($request);
   }
 
@@ -158,15 +159,47 @@ class SubscribeToParkingPlanTest extends TestCase
       ->willReturn(5); // 5 actifs >= 5 places totales
 
     $this->expectException(\Exception::class);
-    $this->expectExceptionMessage("Impossible de souscrire : Le quota d'abonnements pour ce parking est atteint.");
+    $this->expectExceptionMessage("Impossible de souscrire : Le quota d'abonnements est atteint sur cette période.");
 
     $futureDate = (new DateTimeImmutable('+1 day'))->format('Y-m-d');
-    $request = new SubscribeToParkingPlanRequest('u1', $parkingId, $planId, $futureDate);
+    $endDateStr = (new DateTimeImmutable('+1 month +1 day'))->format('Y-m-d');
+    $request = new SubscribeToParkingPlanRequest('u1', $parkingId, $planId, $futureDate, $endDateStr);
 
     // ACT
     $this->useCase->execute($request);
   }
+  public function testExecuteThrowsIfEndDateBeforeStartDate(): void
+  {
+    $plan = new SubscriptionPlan('p1', 'N', 100, new WeeklySchedule([]));
+    $parking = $this->createDummyParking('park1', 10, [$plan]);
+    $this->parkingRepository->method('findById')->willReturn($parking);
 
+    $this->expectException(\Exception::class);
+    $this->expectExceptionMessage("La date de fin doit être après la date de début.");
+
+    $start = (new DateTimeImmutable('+10 days'))->format('Y-m-d');
+    $end = (new DateTimeImmutable('+5 days'))->format('Y-m-d'); // ❌ Fin avant début
+
+    $request = new SubscribeToParkingPlanRequest('u1', 'park1', 'p1', $start, $end);
+    $this->useCase->execute($request);
+  }
+
+  // 👇 NOUVEAU TEST 2 : Vérifie la durée minimum de 1 mois
+  public function testExecuteThrowsIfDurationTooShort(): void
+  {
+    $plan = new SubscriptionPlan('p1', 'N', 100, new WeeklySchedule([]));
+    $parking = $this->createDummyParking('park1', 10, [$plan]);
+    $this->parkingRepository->method('findById')->willReturn($parking);
+
+    $this->expectException(\Exception::class);
+    $this->expectExceptionMessage("La durée de l'abonnement doit être d'au moins 1 mois.");
+
+    $start = (new DateTimeImmutable('+1 day'))->format('Y-m-d');
+    $end = (new DateTimeImmutable('+15 days'))->format('Y-m-d'); // ❌ Seulement 15 jours
+
+    $request = new SubscribeToParkingPlanRequest('u1', 'park1', 'p1', $start, $end);
+    $this->useCase->execute($request);
+  }
   /**
    * Helper pour créer rapidement un objet Parking valide
    */

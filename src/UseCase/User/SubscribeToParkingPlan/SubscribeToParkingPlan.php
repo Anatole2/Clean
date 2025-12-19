@@ -27,7 +27,7 @@ class SubscribeToParkingPlan
       throw new Exception("Parking introuvable.");
     }
 
-    // 2. Trouver le plan demandé (par son nom)
+    // 2. Trouver le plan
     $selectedPlan = null;
     foreach ($parking->getSubscriptionPlans() as $plan) {
       if ($plan->getId() === $request->planId) {
@@ -35,57 +35,71 @@ class SubscribeToParkingPlan
         break;
       }
     }
-
     if (!$selectedPlan) {
-      throw new Exception("Le plan d'abonnement '{$request->planId}' n'existe pas pour ce parking.");
+      throw new Exception("Le plan d'abonnement '{$request->planId}' n'existe pas.");
     }
 
-    // 3. Calcul des dates
+    // 3. Gestion et Validation des Dates
     $startDate = DateTimeImmutable::createFromFormat('Y-m-d', $request->startDate);
-    if (!$startDate) {
+    $endDate = DateTimeImmutable::createFromFormat('Y-m-d', $request->endDate); // 👈 Lecture date fin
+
+    if (!$startDate || !$endDate) {
       throw new Exception("Format de date invalide (attendu: YYYY-MM-DD).");
     }
 
-    $startDate = $startDate->setTime(0, 0, 0); // Début de journée
-    $today = new DateTimeImmutable('today');
+    // Normalisation (Début à 00:00, Fin à 23:59:59)
+    $startDate = $startDate->setTime(0, 0, 0);
+    $endDate = $endDate->setTime(23, 59, 59);
 
+    // Validation 1 : Pas dans le passé
+    $today = new DateTimeImmutable('today');
     if ($startDate < $today) {
       throw new Exception("La date de début ne peut pas être dans le passé.");
     }
 
-    // Durée : 1 mois (règle métier par défaut)
-    // La fin est à 23:59:59 du dernier jour
-    $endDate = $startDate->modify('+1 month')->modify('-1 second');
+    // Validation 2 : Date de fin > Date de début
+    if ($endDate <= $startDate) {
+      throw new Exception("La date de fin doit être après la date de début.");
+    }
+
+    // Validation 3 : Durée minimum de 1 mois
+    // On calcule la date minimale acceptée (Date début + 1 mois)
+    $minEndDate = $startDate->modify('+1 month')->modify('-1 day')->setTime(23, 59, 59);
+
+    if ($endDate < $minEndDate) {
+      throw new Exception("La durée de l'abonnement doit être d'au moins 1 mois.");
+    }
 
     // 4. Vérification de Capacité
-    // On vérifie combien d'abonnements sont déjà actifs sur cette période
     $activeSubs = $this->subscriptionRepository->countActiveForParking(
       $parking->getId(),
       $startDate,
       $endDate
     );
 
-    // Règle simplifiée : Si nb_abonnés >= nb_places, on refuse.
-    // (On pourrait faire plus complexe en mélangeant avec les réservations, 
-    // mais c'est une sécurité de base pour éviter la survente massive).
     if ($activeSubs >= $parking->getTotalPlaces()) {
-      throw new Exception("Impossible de souscrire : Le quota d'abonnements pour ce parking est atteint.");
+      throw new Exception("Impossible de souscrire : Le quota d'abonnements est atteint sur cette période.");
     }
 
-    // 5. Création de l'entité UserSubscription
+    // 5. Calcul du PRIX TOTAL (Optionnel mais recommandé)
+    // Ici, on stocke le prix mensuel (Unit Price) dans l'entité pour référence (Snapshot).
+    // Si tu voulais stocker le "Prix Total à payer", il faudrait faire un calcul ici.
+    // Pour l'instant, on garde le fonctionnement "Prix du forfait" (MonthlyPrice).
+
+    // 6. Création de l'entité
     $subscription = new UserSubscription(
       $this->idGenerator->generate(),
       $request->userId,
       $parking->getId(),
-      $selectedPlan->getId(),       // 1. L'ID du plan
-      $selectedPlan->getName(),     // 2. Le Nom (Snapshot)
-      $selectedPlan->getMonthlyPrice(), // 3. Le Prix (Snapshot)
+      $selectedPlan->getId(),
+      $selectedPlan->getName(),
+      $selectedPlan->getMonthlyPrice(),
       $startDate,
-      $endDate,
-      $selectedPlan->getSchedule()  // 4. Les Horaires (Snapshot)
+      $endDate, // 👈 On utilise la date de fin choisie par l'user
+      $selectedPlan->getSchedule()
     );
 
-    // 6. Sauvegarde
+    // 7. Sauvegarde
     $this->subscriptionRepository->save($subscription);
 
     return new SubscribeToParkingPlanResponse($subscription);

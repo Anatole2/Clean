@@ -27,6 +27,7 @@ use App\Infrastructure\Controller\User\EnterParkingController;
 use App\Infrastructure\Controller\User\ExitParkingController;
 use App\Infrastructure\Controller\Owner\ShowAddParkingSubscriptionPlanController;
 use App\Infrastructure\Controller\Owner\AddParkingSubscriptionPlanController;
+use App\Infrastructure\Controller\User\SubscribeToParkingPlanController;
 
 // --- DÉBUT DU BLOC GLOBAL ---
 try {
@@ -70,6 +71,7 @@ try {
     $r->addRoute('POST', '/reservation', CreateReservationController::class);
     $r->addRoute('POST', '/parkings/{id}/enter', EnterParkingController::class);
     $r->addRoute('POST', '/parkings/{id}/exit', ExitParkingController::class);
+    $r->addRoute('POST', '/parkings/{id}/subscribe', SubscribeToParkingPlanController::class);
   });
 
   // 3. ANALYSE DE L'URL (DISPATCH)

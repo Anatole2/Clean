@@ -15,6 +15,12 @@
             
             {% set rules = parking.openingHours.toArray %}
             
+            {# Définition des jours pour l'affichage (réutilisable plus bas) #}
+            {% set days = {
+                1: 'Lundi', 2: 'Mardi', 3: 'Mercredi', 
+                4: 'Jeudi', 5: 'Vendredi', 6: 'Samedi', 7: 'Dimanche'
+            } %}
+            
             {% if rules is empty %}
                 <div style="padding: 1rem; background-color: #e6fffa; color: #20c997; border-radius: 8px; margin-bottom: 2rem;">
                     <strong>✅ Ouvert 24h/24 et 7j/7</strong>
@@ -28,12 +34,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {# Mapping des jours (1=Lundi, etc.) #}
-                        {% set days = {
-                            1: 'Lundi', 2: 'Mardi', 3: 'Mercredi', 
-                            4: 'Jeudi', 5: 'Vendredi', 6: 'Samedi', 7: 'Dimanche'
-                        } %}
-
                         {% for rule in rules %}
                             <tr>
                                 <td>{{ days[rule.startDay] }}</td>
@@ -66,8 +66,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {# On suppose que prices est sous la forme [minutes => prix_centimes] #}
-                        {# On trie par durée pour que ce soit logique #}
                         {% for minutes, price in prices %}
                             <tr>
                                 <td>
@@ -96,20 +94,57 @@
             </article>
 
             <article>
-                <header><strong>Résident ou travailleur ?</strong></header>
-                <p>Découvrez nos forfaits mensuels.</p>
+                <header><strong>⭐ Abonnements Mensuels</strong></header>
+                <p>Idéal pour les résidents et travailleurs.</p>
                 
-                {% if parking.subscriptionPlans is not empty %}
-                    <ul>
-                    {% for plan in parking.subscriptionPlans %}
-                        <li>{{ plan.name }} : <strong>{{ plan.monthlyPrice / 100 }} €</strong> / mois</li>
-                    {% endfor %}
-                    </ul>
-                    <a href="/subscription/new?parkingId={{ parking.id }}" role="button" class="secondary">
-                        ⭐ S'abonner
-                    </a>
+                {% if parking.subscriptionPlans is empty %}
+                    <div style="padding: 1rem; background-color: #f8f9fa; border-radius: 8px;">
+                        <em>Pas d'abonnements disponibles pour ce parking.</em>
+                    </div>
                 {% else %}
-                    <p><em>Pas d'abonnements disponibles pour ce parking.</em></p>
+                    {% for plan in parking.subscriptionPlans %}
+                        <div style="border: 1px solid #e9ecef; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; background-color: #fff;">
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <h4 style="margin: 0; font-size: 1.1rem; color: #333;">{{ plan.name }}</h4>
+                                <strong style="color: #087f5b; font-size: 1.2rem;">
+                                    {{ plan.monthlyPrice / 100 }} € <small style="font-size:0.6em; color: #666;">/mois</small>
+                                </strong>
+                            </div>
+
+                            <details style="margin-bottom: 1rem;">
+                                <summary style="color: #333;"><small>Voir les horaires inclus</small></summary>
+                                <ul style="font-size: 0.85rem; color: #333; margin-top: 0.5rem; padding-left: 1.2rem;">
+                                    {% if plan.schedule.toArray is empty %}
+                                        <li>✅ Accès illimité 24h/24 7j/7</li>
+                                    {% else %}
+                                        {% for slot in plan.schedule.toArray %}
+                                            <li>
+                                                {{ days[slot.startDay] }} {{ slot.startTime }} 
+                                                ➝ {{ days[slot.endDay] }} {{ slot.endTime }}
+                                            </li>
+                                        {% endfor %}
+                                    {% endif %}
+                                </ul>
+                            </details>
+                            
+                            <form action="/parkings/{{ parking.id }}/subscribe" method="POST">
+                              <input type="hidden" name="plan_id" value="{{ plan.id }}">
+                              <label>Début :</label>
+                              <input type="date" name="start_date" 
+                                 value="{{ 'now'|date('Y-m-d') }}" 
+                                 min="{{ 'now'|date('Y-m-d') }}" required>
+
+                              <label>Fin (min 1 mois) :</label>
+                              <input type="date" name="end_date" 
+                                 value="{{ 'now'|date_modify('+1 month')|date('Y-m-d') }}" 
+                                 min="{{ 'now'|date_modify('+1 month')|date('Y-m-d') }}" required>
+           
+                              <button type="submit">S'abonner</button>
+                            </form>
+
+                        </div>
+                    {% endfor %}
                 {% endif %}
             </article>
         </div>

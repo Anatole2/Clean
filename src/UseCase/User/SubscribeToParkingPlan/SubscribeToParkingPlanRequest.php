@@ -10,6 +10,7 @@ class SubscribeToParkingPlanRequest
     public string $userId,
     public string $parkingId,
     public string $planId, // On identifie le plan par son nom unique dans le parking
-    public string $startDate // Format Y-m-d
+    public string $startDate, // Format Y-m-d
+    public string $endDate
   ) {}
 }

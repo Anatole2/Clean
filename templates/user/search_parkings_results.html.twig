@@ -19,7 +19,7 @@
                     <small>{{ parking.priceLabel }}</small>
                 </p>
                 <footer>
-                    <a href="/reservation/new?parkingId={{ parking.id }}" role="button">Réserver</a>
+                    <a href="/parkings/{{ parking.id }}" role="button">Détails</a>
                 </footer>
             </article>
         {% endfor %}
