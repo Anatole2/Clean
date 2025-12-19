@@ -109,16 +109,79 @@ class SqlParkingSessionRepositoryTest extends IntegrationTestCase
     // ASSERT : Seul s2 compte
     $this->assertEquals(1, $count);
   }
+  public function testFindByUserIdReturnsCorrectSessionsOrderedByEntryTimeDesc(): void
+  {
+    // ARRANGE
 
+    // Session 1 : Ancienne, Terminée
+    $s1 = new ParkingSession(
+      'sess-old',
+      'p1',
+      'u1',
+      null,
+      new DateTimeImmutable('2025-01-01 10:00'),
+      new DateTimeImmutable('2025-01-01 12:00'),
+      500
+    );
+    $this->repo->save($s1);
+
+    // Session 2 : Récente, En cours (ExitTime NULL)
+    $s2 = new ParkingSession(
+      'sess-active',
+      'p1',
+      'u1',
+      null,
+      new DateTimeImmutable('2025-02-01 10:00'),
+      null, // NULL
+      0
+    );
+    $this->repo->save($s2);
+
+    // Session 3 : Autre utilisateur (Ne doit pas être récupérée)
+    $s3 = new ParkingSession(
+      'sess-other',
+      'p1',
+      'u2',
+      null,
+      new DateTimeImmutable('2025-01-01 10:00'),
+      null,
+      0
+    );
+    $this->repo->save($s3);
+
+    // ACT
+    $results = $this->repo->findByUserId('u1');
+
+    // ASSERT
+    $this->assertCount(2, $results);
+
+    // Vérification de l'ordre (DESC : Le plus récent en premier)
+    $this->assertEquals('sess-active', $results[0]->getId());
+    $this->assertEquals('sess-old', $results[1]->getId());
+
+    // Vérification de l'hydratation (Gestion du NULL)
+    $this->assertNull($results[0]->getExitTime());
+    $this->assertNotNull($results[1]->getExitTime());
+  }
+
+  public function testFindByUserIdReturnsEmptyArrayIfNoSessions(): void
+  {
+    $results = $this->repo->findByUserId('user-sans-session');
+    $this->assertIsArray($results);
+    $this->assertEmpty($results);
+  }
   // --- Helpers ---
 
   private function createDummyData(): void
   {
     // On utilise $this->pdo qui vient du parent IntegrationTestCase
     $this->pdo->exec("INSERT INTO accounts (id, email, password_hash, role) VALUES ('u1', 'test@test.com', 'hash', 'USER')");
+    $this->pdo->exec("INSERT INTO accounts (id, email, password_hash, role) VALUES ('u2', 'other@test.com', 'hash', 'USER')");
 
     $this->pdo->exec("INSERT INTO parkings (id, name, latitude, longitude, total_places, price_grid, opening_hours, subscription_plans, owner_id) 
-            VALUES ('p1', 'Parking Test', 0, 0, 10, '{}', '{}', '[]', 'u1')");    // Initialisation des FK pour les tests
+            VALUES ('p1', 'Parking Test', 0, 0, 10, '{}', '{}', '[]', 'u1')");
+
+    // Initialisation des FK pour les tests
     $this->createReservation('res-1', 'p1', 'u1', '2024-01-01 08:00', '2024-01-01 18:00');
     $this->createReservation('res-2', 'p1', 'u1', '2024-01-01 08:00', '2024-01-01 18:00');
   }
