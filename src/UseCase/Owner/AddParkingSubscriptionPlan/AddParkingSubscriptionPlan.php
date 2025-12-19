@@ -32,7 +32,10 @@ class AddParkingSubscriptionPlan
     // 3. Création des Value Objects (Validation incluse)
     $rule = new WeeklySchedule($request->ruleConfig);
 
+    $planId = uniqid(); // Génération d'un ID unique pour le plan
+
     $plan = new SubscriptionPlan(
+      $planId,
       $request->planName,
       $request->monthlyPrice,
       $rule

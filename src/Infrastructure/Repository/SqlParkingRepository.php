@@ -11,7 +11,6 @@ use App\Domain\ValueObject\PriceGrid;
 use App\Domain\ValueObject\WeeklySchedule;
 use App\Domain\ValueObject\SubscriptionPlan;
 use PDO;
-use Exception;
 
 class SqlParkingRepository implements ParkingRepositoryInterface
 {
@@ -102,6 +101,7 @@ class SqlParkingRepository implements ParkingRepositoryInterface
     // 2. Reconstruction des objets
     $plans = array_map(function (array $data) {
       return new SubscriptionPlan(
+        $data['id'],
         $data['name'],
         (int)$data['price'],
         new WeeklySchedule($data['rule'])
@@ -133,10 +133,6 @@ class SqlParkingRepository implements ParkingRepositoryInterface
 
     return $parkings;
   }
-  /* public function findNearby(GpsCoordinates $center, float $radiusInKm): array */
-  /* { */
-  /*   throw new Exception("TODO"); */
-  /* } */
   // La fonction findNearby() utilisant la formule de Haversine est commentée ci-dessous.
   public function findNearby(GpsCoordinates $center, float $radiusInKm): array
   {
@@ -169,5 +165,4 @@ class SqlParkingRepository implements ParkingRepositoryInterface
 
     return $parkings;
   }
-  // TODO: Implémenter delete(), findAll(), etc. selon l'interface définie
 }
