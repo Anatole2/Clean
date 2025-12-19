@@ -1,0 +1,61 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes Réservations{% endblock %}
+
+{% block body %}
+<div class="container">
+    <h2 style="margin-bottom: 2rem;">📅 Mes Réservations</h2>
+
+    {% if reservations is empty %}
+        <article>
+            <p>Vous n'avez aucune réservation.</p>
+            <a href="/search" role="button">Trouver un parking</a>
+        </article>
+    {% else %}
+        <div style="overflow-x: auto;">
+            <table role="grid">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Parking</th>
+                        <th>Créneau</th>
+                        <th>Prix</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                  {% for res in reservations %}
+                    <tr>
+                      <td>{{ res.startAt }}</td> 
+                      <td>
+                        <a href="/parkings/{{ res.parkingId }}">Voir Parking</a>
+                      </td>
+                      <td>
+                        {{ res.startAt|split(' ')[1] }} ➝ {{ res.endAt|split(' ')[1] }}
+                      </td>
+                      <td>{{ res.price / 100 }} €</td>
+                      <td>
+                        {% if res.status == 'VALIDATED' %}
+                          <span style="color: green;">Confirmé</span>
+                        {% elseif res.status == 'CANCELLED' %}
+                          <span style="color: red;">Annulé</span>
+                        {% else %}
+                          {{ res.status }}
+                        {% endif %}
+                      </td>
+                      <td>
+                        {% if res.canGenerateInvoice %}
+                          <a href="/reservations/{{ res.id }}/invoice" target="_blank">📄 Facture</a>
+                        {% else %}
+                          Facture indisponible
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>           
+            </table>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

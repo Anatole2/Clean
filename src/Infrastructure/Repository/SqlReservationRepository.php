@@ -29,6 +29,21 @@ class SqlReservationRepository implements ReservationRepositoryInterface
       'status' => $reservation->getStatus()
     ]);
   }
+  public function findByUserId(string $userId): array
+  {
+    $stmt = $this->connection->prepare("
+            SELECT * FROM reservations 
+            WHERE user_id = :uid 
+            ORDER BY start_time DESC
+        ");
+    $stmt->execute(['uid' => $userId]);
+
+    $reservations = [];
+    while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+      $reservations[] = $this->hydrate($row);
+    }
+    return $reservations;
+  }
   public function findById(string $id): ?\App\Domain\Entity\Reservation
   {
     $stmt = $this->connection->prepare("SELECT * FROM reservations WHERE id = :id");

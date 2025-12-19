@@ -18,6 +18,8 @@ interface ReservationRepositoryInterface
     DateTimeImmutable $end
   ): int;
 
+  public function findByUserId(string $userId): array;
+
   public function findActiveForUser(string $userId, string $parkingId, \DateTimeImmutable $now): ?\App\Domain\Entity\Reservation;
 
   public function findById(string $id): ?\App\Domain\Entity\Reservation;
