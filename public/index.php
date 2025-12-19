@@ -27,10 +27,12 @@ use App\Infrastructure\Controller\User\EnterParkingController;
 use App\Infrastructure\Controller\User\ExitParkingController;
 use App\Infrastructure\Controller\Owner\ShowAddParkingSubscriptionPlanController;
 use App\Infrastructure\Controller\Owner\AddParkingSubscriptionPlanController;
+use App\Infrastructure\Controller\Owner\ShowUpdateParkingPriceFormController;
 use App\Infrastructure\Controller\User\SubscribeToParkingPlanController;
 use App\Infrastructure\Controller\User\GetReservationsController;
 use App\Infrastructure\Controller\User\GenerateInvoiceController;
 use App\Infrastructure\Controller\User\GetParkingSessionsController;
+use App\Infrastructure\Controller\Owner\UpdateParkingPriceController;
 
 // --- DÉBUT DU BLOC GLOBAL ---
 try {
@@ -52,6 +54,8 @@ try {
     $r->addRoute('POST', '/parkings', CreateParkingController::class);
     $r->addRoute('GET', '/parkings/{id}/plans/new', ShowAddParkingSubscriptionPlanController::class);
     $r->addRoute('POST', '/parkings/{id}/plans', AddParkingSubscriptionPlanController::class);
+    $r->addRoute('GET', '/parkings/{id}/prices', ShowUpdateParkingPriceFormController::class);
+    $r->addRoute('POST', '/parkings/{id}/prices', UpdateParkingPriceController::class);
 
     // User
     $r->addRoute('GET', '/search', SearchParkingsController::class);

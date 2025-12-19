@@ -1,0 +1,177 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Modifier Tarifs - {{ parking.name }}{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h1>💰 Grille Tarifaire : {{ parking.name }}</h1>
+        <br><br>
+
+        <form action="/parkings/{{ parking.id }}/prices" method="POST" onsubmit="return validateForm()">
+            
+            <fieldset>
+                <legend><strong>Ajouter / Modifier les prix</strong></legend>
+                
+                <div class="grid" style="background: #f4f4f4; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <div>
+                        <label>Durée (minutes)</label>
+                        <input type="number" id="newDuration" placeholder="ex: 60" min="15" step="15">
+                    </div>
+                    <div>
+                        <label>Prix (€)</label>
+                        <input type="number" id="newPrice" placeholder="ex: 2.50" min="0" step="0.10">
+                    </div>
+                    <div style="display: flex; align-items: flex-end;">
+                        <button type="button" onclick="addPrice()" class="contrast" style="margin-bottom: 20px;">➕ Ajouter</button>
+                    </div>
+                </div>
+
+                <table role="grid">
+                    <thead>
+                        <tr>
+                            <th>Durée</th>
+                            <th>Prix (€)</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="priceListBody">
+                        {# --- C'EST ICI QUE LA MAGIE OPÈRE --- #}
+                        {# On boucle sur les prix existants en BDD pour pré-remplir le tableau #}
+                        {% for duration, priceCents in parking.priceGrid.toArray %}
+                            {% set priceEuro = priceCents / 100 %}
+                            
+                            <tr id="row_{{ duration }}">
+                                <td>
+                                    <strong>{{ duration }} min</strong>
+                                    {# Petit calcul pour afficher l'heure lisible #}
+                                    {% set h = (duration / 60)|round(0, 'floor') %}
+                                    {% set m = duration % 60 %}
+                                    <small style="color:grey">
+                                        ({% if h > 0 %}{{ h }}h{% endif %}{% if m > 0 %}{{ m }}{% endif %})
+                                    </small>
+                                </td>
+                                <td>
+                                    <input type="number" 
+                                           step="0.01" 
+                                           value="{{ priceEuro|number_format(2, '.', '') }}" 
+                                           oninput="updateHiddenPrice('{{ duration }}', this.value)"
+                                           style="margin-bottom: 0;">
+                                </td>
+                                <td>
+                                    <a href="#" onclick="removePrice('{{ duration }}'); return false;" style="color: red;">Supprimer</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <div id="hiddenPricesContainer">
+                    {# On génère aussi les inputs cachés correspondants aux données BDD #}
+                    {% for duration, priceCents in parking.priceGrid.toArray %}
+                        <input type="hidden" 
+                               id="hidden_input_{{ duration }}" 
+                               name="priceGridConfig[{{ duration }}]" 
+                               value="{{ priceCents }}">
+                    {% endfor %}
+                </div>
+
+            </fieldset>
+
+            <button type="submit">💾 Enregistrer les modifications</button>
+        </form>
+    </div>
+
+    <script>
+        /**
+         * Met à jour l'input caché quand on modifie le prix visuel
+         * C'est ce qui permet de modifier les données existantes !
+         */
+        function updateHiddenPrice(duration, euroValue) {
+            const hiddenInput = document.getElementById('hidden_input_' + duration);
+            if (hiddenInput) {
+                // Conversion Euros -> Centimes
+                hiddenInput.value = Math.round(parseFloat(euroValue) * 100);
+            }
+        }
+
+        /**
+         * Ajoute une nouvelle ligne (Logique identique au create)
+         */
+        function addPrice() {
+            const durationInput = document.getElementById('newDuration');
+            const priceInput = document.getElementById('newPrice');
+            const duration = durationInput.value;
+            const priceEuro = parseFloat(priceInput.value);
+
+            if (!duration || isNaN(priceEuro)) {
+                alert("Veuillez remplir la durée et le prix.");
+                return;
+            }
+
+            // Vérif doublon
+            if (document.getElementById('row_' + duration)) {
+                alert("Cette durée existe déjà dans le tableau.");
+                return;
+            }
+
+            const priceCents = Math.round(priceEuro * 100);
+
+            // 1. Ajout Visuel
+            const tbody = document.getElementById('priceListBody');
+            const tr = document.createElement('tr');
+            tr.id = 'row_' + duration;
+            
+            // Calcul affichage heure (optionnel, pour faire joli)
+            const h = Math.floor(duration / 60);
+            const m = duration % 60;
+            const readable = (h > 0 ? h + 'h' : '') + (m > 0 ? m : '');
+
+            tr.innerHTML = `
+                <td>
+                    <strong>${duration} min</strong> <small style="color:grey">(${readable})</small>
+                </td>
+                <td>
+                    <input type="number" step="0.01" value="${priceEuro.toFixed(2)}" 
+                           oninput="updateHiddenPrice('${duration}', this.value)" 
+                           style="margin-bottom: 0;">
+                </td>
+                <td>
+                    <a href="#" onclick="removePrice('${duration}'); return false;" style="color: red;">Supprimer</a>
+                </td>
+            `;
+            tbody.insertBefore(tr, tbody.firstChild); // Ajout en haut
+
+            // 2. Ajout Caché
+            const container = document.getElementById('hiddenPricesContainer');
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.id = 'hidden_input_' + duration;
+            input.name = `priceGridConfig[${duration}]`;
+            input.value = priceCents;
+            container.appendChild(input);
+
+            // Reset
+            durationInput.value = '';
+            priceInput.value = '';
+            durationInput.focus();
+        }
+
+        /**
+         * Supprime une ligne (Visuel + Caché)
+         */
+        function removePrice(duration) {
+            const row = document.getElementById('row_' + duration);
+            const input = document.getElementById('hidden_input_' + duration);
+            if (row) row.remove();
+            if (input) input.remove();
+        }
+
+        function validateForm() {
+            const container = document.getElementById('hiddenPricesContainer');
+            if (container.children.length === 0) {
+                return confirm("Attention : La grille est vide. Le parking sera gratuit ou inaccessible. Continuer ?");
+            }
+            return true;
+        }
+    </script>
+{% endblock %}

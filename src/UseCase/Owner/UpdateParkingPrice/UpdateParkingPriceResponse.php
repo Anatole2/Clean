@@ -8,16 +8,14 @@ use App\Domain\Entity\Parking;
 
 class UpdateParkingPriceResponse
 {
+  // ✅ On stocke l'objet Parking complet en public
   public function __construct(
-    public string $id,
-    public array $priceGrid
+    public Parking $parking
   ) {}
 
   public static function fromParking(Parking $parking): self
   {
-    return new self(
-      $parking->getId(),
-      $parking->getPriceGrid()->toArray()
-    );
+    // On injecte l'entité directement
+    return new self($parking);
   }
 }

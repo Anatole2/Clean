@@ -1,0 +1,26 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Succès{% endblock %}
+
+{% block body %}
+<div class="container" style="text-align: center; padding-top: 50px;">
+    
+    <div style="color: #155724; padding: 20px; border-radius: 8px; display: inline-block;">
+        <h2>✅ Tarifs mis à jour !</h2>
+        <p>Les nouveaux tarifs pour <strong>{{ parking.name }}</strong> ont bien été enregistrés.</p>
+    </div>
+
+    <br><br>
+
+    <div class="actions">
+        <a href="/owner/parkings/{{ parking.id }}/prices" class="btn btn-secondary">
+            ✏️ Modifier encore
+        </a>
+        &nbsp;
+        <a href="/owner/parkings" class="btn btn-primary">
+            📋 Retour à la liste
+        </a>
+    </div>
+
+</div>
+{% endblock %}

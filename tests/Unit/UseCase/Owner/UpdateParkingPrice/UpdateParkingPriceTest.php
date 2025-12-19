@@ -60,7 +60,9 @@ class UpdateParkingPriceTest extends TestCase
 
     // 3. ASSERTION
     $this->assertInstanceOf(UpdateParkingPriceResponse::class, $response);
-    $this->assertEquals(200, $response->priceGrid[60]);
+    $updatedParking = $response->parking; // On récupère l'entité
+    $priceGridArray = $updatedParking->getPriceGrid()->toArray(); // On récupère le tableau via le VO
+    $this->assertEquals(200, $priceGridArray[60]);
   }
 
   public function testItThrowsExceptionIfParkingNotFound(): void

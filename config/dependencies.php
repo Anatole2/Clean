@@ -35,6 +35,7 @@ use App\UseCase\User\SubscribeToParkingPlan\SubscribeToParkingPlan;
 use App\UseCase\User\GetReservations\GetReservations;
 use App\UseCase\User\GenerateInvoice\GenerateInvoice;
 use App\UseCase\User\GetParkingSessions\GetParkingSessions;
+use App\UseCase\Owner\UpdateParkingPrice\UpdateParkingPrice;
 
 // Controllers
 use App\Infrastructure\Controller\Owner\CreateParkingController;
@@ -54,10 +55,12 @@ use App\Infrastructure\Controller\User\EnterParkingController;
 use App\Infrastructure\Controller\User\ExitParkingController;
 use App\Infrastructure\Controller\Owner\AddParkingSubscriptionPlanController;
 use App\Infrastructure\Controller\Owner\ShowAddParkingSubscriptionPlanController;
+use App\Infrastructure\Controller\Owner\ShowUpdateParkingPriceFormController;
 use App\Infrastructure\Controller\User\SubscribeToParkingPlanController;
 use App\Infrastructure\Controller\User\GetReservationsController;
 use App\Infrastructure\Controller\User\GenerateInvoiceController;
 use App\Infrastructure\Controller\User\GetParkingSessionsController;
+use App\Infrastructure\Controller\Owner\UpdateParkingPriceController;
 
 // Twig
 use Twig\Loader\FilesystemLoader;
@@ -179,6 +182,10 @@ $c[GetParkingSessions::class] = fn($c) => new GetParkingSessions(
   $c[ParkingRepositoryInterface::class]($c)
 );
 
+$c[UpdateParkingPrice::class] = fn($c) => new UpdateParkingPrice(
+  $c[ParkingRepositoryInterface::class]($c)
+);
+
 // --- 6. Controllers ---
 $c[CreateParkingController::class] = function ($c) {
   return new CreateParkingController(
@@ -283,6 +290,17 @@ $c[GenerateInvoiceController::class] = fn($c) => new GenerateInvoiceController(
 $c[GetParkingSessionsController::class] = fn($c) => new GetParkingSessionsController(
   $c[GetParkingSessions::class]($c),
   $c[PresenterFactory::class]($c),
+  $c[Environment::class]($c)
+);
+
+$c[UpdateParkingPriceController::class] = fn($c) => new UpdateParkingPriceController(
+  $c[UpdateParkingPrice::class]($c),
+  $c[PresenterFactory::class]($c),
+  $c[Environment::class]($c)
+);
+
+$c[ShowUpdateParkingPriceFormController::class] = fn($c) => new ShowUpdateParkingPriceFormController(
+  $c[ParkingRepositoryInterface::class]($c),
   $c[Environment::class]($c)
 );
 
