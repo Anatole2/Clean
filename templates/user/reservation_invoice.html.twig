@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Facture {{ invoice.invoiceNumber }}</title>
+    <style>
+        body { font-family: Helvetica, Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; color: #333; }
+        .header { display: flex; justify-content: space-between; margin-bottom: 40px; border-bottom: 2px solid #eee; padding-bottom: 20px; }
+        .logo h1 { margin: 0; color: #d93526; }
+        .details { display: flex; justify-content: space-between; margin-bottom: 40px; }
+        .box { width: 45%; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        th { text-align: left; background: #f9f9f9; padding: 10px; border-bottom: 2px solid #ddd; }
+        td { padding: 10px; border-bottom: 1px solid #eee; }
+        .totals { float: right; width: 300px; }
+        .totals-row { display: flex; justify-content: space-between; padding: 5px 0; }
+        .grand-total { font-weight: bold; font-size: 1.2em; border-top: 2px solid #333; margin-top: 10px; padding-top: 10px; }
+        .footer { clear: both; margin-top: 50px; text-align: center; font-size: 0.8em; color: #777; border-top: 1px solid #eee; padding-top: 20px; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body>
+
+    <div class="no-print" style="margin-bottom: 20px; text-align: right;">
+        <button onclick="window.print()" style="padding: 10px 20px; cursor: pointer;">🖨️ Imprimer / PDF</button>
+        <a href="/reservations" style="margin-left: 10px;">Retour</a>
+    </div>
+
+    <div class="header">
+        <div class="logo">
+            <h1>Parking App</h1>
+            <p>Facture #{{ invoice.invoiceNumber }}</p>
+            <p>Date : {{ invoice.createdAt }}</p>
+        </div>
+        <div style="text-align: right;">
+            <strong>ÉMETTEUR</strong><br>
+            {{ invoice.sellerName }}<br>
+            <small>{{ invoice.sellerAddress }}</small>
+        </div>
+    </div>
+
+    <div class="details">
+        <div class="box">
+            <strong>CLIENT</strong><br>
+            {{ invoice.buyerName }}<br>
+            {{ invoice.buyerEmail }}
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th>Période</th>
+                <th style="text-align: right;">Montant TTC</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <strong>{{ invoice.description }}</strong>
+                </td>
+                <td>
+                    Du {{ invoice.startAt }}<br>
+                    Au {{ invoice.endAt }}
+                </td>
+                <td style="text-align: right;">{{ invoice.totalAmount }} €</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <div class="totals-row">
+            <span>Total HT :</span>
+            <span>{{ invoice.amountExclTax }} €</span>
+        </div>
+        <div class="totals-row">
+            <span>TVA (20%) :</span>
+            <span>{{ invoice.vatAmount }} €</span>
+        </div>
+        <div class="totals-row grand-total">
+            <span>Total TTC :</span>
+            <span>{{ invoice.totalAmount }} €</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        Merci pour votre confiance. <br>
+        Parking App SAS - 123 Rue de la Paix, 75000 Paris
+    </div>
+
+</body>
+</html>
