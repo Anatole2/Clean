@@ -30,6 +30,7 @@ use App\Infrastructure\Controller\Owner\AddParkingSubscriptionPlanController;
 use App\Infrastructure\Controller\User\SubscribeToParkingPlanController;
 use App\Infrastructure\Controller\User\GetReservationsController;
 use App\Infrastructure\Controller\User\GenerateInvoiceController;
+use App\Infrastructure\Controller\User\GetParkingSessionsController;
 
 // --- DÉBUT DU BLOC GLOBAL ---
 try {
@@ -52,6 +53,17 @@ try {
     $r->addRoute('GET', '/parkings/{id}/plans/new', ShowAddParkingSubscriptionPlanController::class);
     $r->addRoute('POST', '/parkings/{id}/plans', AddParkingSubscriptionPlanController::class);
 
+    // User
+    $r->addRoute('GET', '/search', SearchParkingsController::class);
+    $r->addRoute('GET', '/reservation/new', ShowReservationFormController::class);
+    $r->addRoute('POST', '/reservation', CreateReservationController::class);
+    $r->addRoute('GET', '/reservations', GetReservationsController::class);
+    $r->addRoute('GET', '/reservations/{id}/invoice', GenerateInvoiceController::class);
+    $r->addRoute('POST', '/parkings/{id}/enter', EnterParkingController::class);
+    $r->addRoute('POST', '/parkings/{id}/exit', ExitParkingController::class);
+    $r->addRoute('POST', '/parkings/{parkingId}/subscribe', SubscribeToParkingPlanController::class);
+    $r->addRoute('GET', '/parkings/sessions', GetParkingSessionsController::class);
+
     // Shared
     $r->addRoute('GET', '/parkings/{id}', GetParkingDetailsController::class);
 
@@ -66,16 +78,6 @@ try {
     $r->addRoute('POST', '/register/user', RegisterUserController::class);
     $r->addRoute(['GET', 'POST'], '/login', LoginController::class);
     $r->addRoute('GET', '/logout', LogoutController::class);
-
-    // User
-    $r->addRoute('GET', '/search', SearchParkingsController::class);
-    $r->addRoute('GET', '/reservation/new', ShowReservationFormController::class);
-    $r->addRoute('POST', '/reservation', CreateReservationController::class);
-    $r->addRoute('GET', '/reservations', GetReservationsController::class);
-    $r->addRoute('GET', '/reservations/{id}/invoice', GenerateInvoiceController::class);
-    $r->addRoute('POST', '/parkings/{id}/enter', EnterParkingController::class);
-    $r->addRoute('POST', '/parkings/{id}/exit', ExitParkingController::class);
-    $r->addRoute('POST', '/parkings/{parkingId}/subscribe', SubscribeToParkingPlanController::class);
   });
 
   // 3. ANALYSE DE L'URL (DISPATCH)

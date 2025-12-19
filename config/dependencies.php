@@ -34,6 +34,7 @@ use App\UseCase\Owner\AddParkingSubscriptionPlan\AddParkingSubscriptionPlan;
 use App\UseCase\User\SubscribeToParkingPlan\SubscribeToParkingPlan;
 use App\UseCase\User\GetReservations\GetReservations;
 use App\UseCase\User\GenerateInvoice\GenerateInvoice;
+use App\UseCase\User\GetParkingSessions\GetParkingSessions;
 
 // Controllers
 use App\Infrastructure\Controller\Owner\CreateParkingController;
@@ -56,6 +57,7 @@ use App\Infrastructure\Controller\Owner\ShowAddParkingSubscriptionPlanController
 use App\Infrastructure\Controller\User\SubscribeToParkingPlanController;
 use App\Infrastructure\Controller\User\GetReservationsController;
 use App\Infrastructure\Controller\User\GenerateInvoiceController;
+use App\Infrastructure\Controller\User\GetParkingSessionsController;
 
 // Twig
 use Twig\Loader\FilesystemLoader;
@@ -172,6 +174,11 @@ $c[GenerateInvoice::class] = fn($c) => new GenerateInvoice(
   $c[AccountRepositoryInterface::class]($c),
 );
 
+$c[GetParkingSessions::class] = fn($c) => new GetParkingSessions(
+  $c[ParkingSessionRepositoryInterface::class]($c),
+  $c[ParkingRepositoryInterface::class]($c)
+);
+
 // --- 6. Controllers ---
 $c[CreateParkingController::class] = function ($c) {
   return new CreateParkingController(
@@ -271,6 +278,12 @@ $c[GetReservationsController::class] = fn($c) => new GetReservationsController(
 $c[GenerateInvoiceController::class] = fn($c) => new GenerateInvoiceController(
   $c[GenerateInvoice::class]($c),
   $c[PresenterFactory::class]($c)
+);
+
+$c[GetParkingSessionsController::class] = fn($c) => new GetParkingSessionsController(
+  $c[GetParkingSessions::class]($c),
+  $c[PresenterFactory::class]($c),
+  $c[Environment::class]($c)
 );
 
 // --- 7. Configuration de Twig ---

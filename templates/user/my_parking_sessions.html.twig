@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon Historique{% endblock %}
+
+{% block body %}
+<div class="container">
+    <h2>⏱️ Mes Stationnements</h2>
+
+    {% if sessions is empty %}
+        <p>Vous n'avez aucun historique de stationnement.</p>
+    {% else %}
+        <table role="grid">
+            <thead>
+                <tr>
+                    <th>Parking</th>
+                    <th>Entrée</th>
+                    <th>Sortie</th>
+                    <th>Durée</th>
+                    <th>Prix Payé</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for session in sessions %}
+                    <tr {% if session.isActive %}style="background-color: #f0fff4;"{% endif %}>
+                        <td>{{ session.parkingName }}</td>
+                        <td>{{ session.entryTime }}</td>
+                        <td>
+                            {% if session.exitTime %}
+                                {{ session.exitTime }}
+                            {% else %}
+                                <em>-</em>
+                            {% endif %}
+                        </td>
+                        <td>{{ session.duration }}</td>
+                        <td>{{ session.pricePaid }} €</td>
+                        <td>
+                            {% if session.isActive %}
+                                <span style="background: #2ecc71; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em;">EN COURS</span>
+                            {% else %}
+                                <span style="color: grey;">Terminé</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+{% endblock %}
