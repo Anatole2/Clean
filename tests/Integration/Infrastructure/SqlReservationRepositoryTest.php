@@ -129,4 +129,32 @@ class SqlReservationRepositoryTest extends IntegrationTestCase
     $notFound = $this->repo->findById('unknown-id');
     $this->assertNull($notFound);
   }
+  public function testFindByUserIdReturnsSortedReservations(): void
+  {
+    // 1. On crée un deuxième utilisateur pour s'assurer qu'on ne mélange pas les données
+    $this->pdo->exec("INSERT INTO accounts (id, email, password_hash, role) VALUES ('u2', 'other@test.com', 'hash', 'USER')");
+
+    // 2. Création de données
+    // R1: User 1, Date Future (Doit apparaitre en premier car ORDER BY start_time DESC)
+    $r1 = new Reservation('r1', 'u1', 'p1', new DateTimeImmutable('2025-02-01 10:00'), new DateTimeImmutable('2025-02-01 12:00'), 500);
+    $this->repo->save($r1);
+
+    // R2: User 1, Date Passée (Doit apparaitre en deuxième)
+    $r2 = new Reservation('r2', 'u1', 'p1', new DateTimeImmutable('2025-01-01 10:00'), new DateTimeImmutable('2025-01-01 12:00'), 500);
+    $this->repo->save($r2);
+
+    // R3: User 2 (Ne doit PAS apparaitre)
+    $r3 = new Reservation('r3', 'u2', 'p1', new DateTimeImmutable('2025-01-01 10:00'), new DateTimeImmutable('2025-01-01 12:00'), 500);
+    $this->repo->save($r3);
+
+    // 3. Exécution
+    $results = $this->repo->findByUserId('u1');
+
+    // 4. Assertions
+    $this->assertCount(2, $results);
+
+    // Vérification de l'ordre (Décroissant par date de début)
+    $this->assertEquals('r1', $results[0]->getId()); // Le plus récent (Février)
+    $this->assertEquals('r2', $results[1]->getId()); // Le plus vieux (Janvier)
+  }
 }
