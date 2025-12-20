@@ -322,4 +322,52 @@ class SqlUserSubscriptionRepositoryTest extends IntegrationTestCase
     $this->pdo->exec("INSERT INTO parkings (id, name, latitude, longitude, total_places, price_grid, opening_hours, subscription_plans, owner_id) 
             VALUES ('p1', 'Parking Test', 0, 0, 10, '{}', '[]', '[]', 'u1')");
   }
+  public function testCalculateRevenue(): void
+  {
+    // 1. Abonnement pris (débutant) en Janvier (COMPTE)
+    $this->createSubscriptionFull(
+      'sub-ok',
+      'p1',
+      '2025-01-10 00:00',
+      '2025-02-10 00:00', // Start en Janvier
+      5000 // 50€
+    );
+
+    // 2. Abonnement pris en Décembre (NE COMPTE PAS pour Janvier, c'est du CA de Décembre)
+    $this->createSubscriptionFull(
+      'sub-prev',
+      'p1',
+      '2024-12-31 23:00',
+      '2025-01-31 23:00', // Start en Décembre
+      5000
+    );
+
+    // 3. Abonnement pris en Février (NE COMPTE PAS)
+    $this->createSubscriptionFull(
+      'sub-next',
+      'p1',
+      '2025-02-01 00:00',
+      '2025-03-01 00:00',
+      5000
+    );
+
+    // ACT : Calcul pour Janvier 2025
+    $start = new \DateTimeImmutable('2025-01-01 00:00:00');
+    $end   = new \DateTimeImmutable('2025-01-31 23:59:59');
+
+    $revenue = $this->repo->calculateRevenue('p1', $start, $end);
+
+    // ASSERT : Seul sub-ok (5000) compte
+    $this->assertEquals(5000, $revenue);
+  }
+
+  // Helper complet
+  private function createSubscriptionFull(string $id, string $pid, string $start, string $end, int $price): void
+  {
+    $stmt = $this->pdo->prepare("
+            INSERT INTO user_subscriptions (id, user_id, parking_id, plan_id, plan_name, price, start_date, end_date, schedule_json, is_active)
+            VALUES (?, 'u1', ?, 'plan-1', 'Plan', ?, ?, ?, '[]', 1)
+        ");
+    $stmt->execute([$id, $pid, $price, $start, $end]);
+  }
 }

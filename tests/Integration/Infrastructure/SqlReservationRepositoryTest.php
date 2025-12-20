@@ -99,18 +99,6 @@ class SqlReservationRepositoryTest extends IntegrationTestCase
     $this->assertNull($found);
   }
 
-  private function createDummyData(): void
-  {
-    $this->pdo->exec("INSERT INTO accounts (id, email, password_hash, role) VALUES ('u1', 'test@test.com', 'hash', 'USER')");
-
-    // Parking 1
-    $this->pdo->exec("INSERT INTO parkings (id, name, latitude, longitude, total_places, price_grid, opening_hours, subscription_plans, owner_id) 
-            VALUES ('p1', 'Parking Test 1', 0, 0, 10, '{}', '{}', '[]', 'u1')");
-
-    // Parking 2 (Pour tester le filtrage)
-    $this->pdo->exec("INSERT INTO parkings (id, name, latitude, longitude, total_places, price_grid, opening_hours, subscription_plans, owner_id) 
-            VALUES ('p2', 'Parking Test 2', 0, 0, 10, '{}', '{}', '[]', 'u1')");
-  }
   public function testFindById(): void
   {
     // 1. On crée une réservation
@@ -132,6 +120,7 @@ class SqlReservationRepositoryTest extends IntegrationTestCase
     $notFound = $this->repo->findById('unknown-id');
     $this->assertNull($notFound);
   }
+
   public function testFindByUserIdReturnsSortedReservations(): void
   {
     // 1. On crée un deuxième utilisateur pour s'assurer qu'on ne mélange pas les données
@@ -160,6 +149,7 @@ class SqlReservationRepositoryTest extends IntegrationTestCase
     $this->assertEquals('r1', $results[0]->getId()); // Le plus récent (Février)
     $this->assertEquals('r2', $results[1]->getId()); // Le plus vieux (Janvier)
   }
+
   public function testFindByParkingIdReturnsCorrectReservationsOrderedByDateDesc(): void
   {
     // 1. ARRANGE
@@ -175,8 +165,6 @@ class SqlReservationRepositoryTest extends IntegrationTestCase
     // Réservation R3 : Parking P2 (Ne doit PAS être récupérée)
     $r3 = new Reservation('res-other', 'u1', 'p2', new DateTimeImmutable('2025-01-01 10:00'), new DateTimeImmutable('2025-01-01 11:00'), 100);
     $this->repo->save($r3);
-
-
 
     // 2. ACT
     $reservations = $this->repo->findByParkingId('p1');
@@ -200,6 +188,7 @@ class SqlReservationRepositoryTest extends IntegrationTestCase
     $this->assertIsArray($reservations);
     $this->assertEmpty($reservations);
   }
+
   public function testCountActiveAt(): void
   {
     // 1. Réservation ACTIVE (10h - 14h)
@@ -256,5 +245,82 @@ class SqlReservationRepositoryTest extends IntegrationTestCase
 
     // ASSERT : Seule la réservation active et confirmée compte
     $this->assertEquals(1, $count);
+  }
+
+  public function testCalculateRevenue(): void
+  {
+    // 1. Réservation VALIDÉE qui finit en Janvier (COMPTE)
+    $this->createReservationFull(
+      'res-ok',
+      'p1',
+      'u1',
+      '2025-01-01 10:00',
+      '2025-01-01 12:00',
+      1000,
+      'CONFIRMED'
+    );
+
+    // 2. Réservation VALIDÉE qui finit en Février (NE COMPTE PAS pour Janvier)
+    $this->createReservationFull(
+      'res-later',
+      'p1',
+      'u1',
+      '2025-01-31 23:00',
+      '2025-02-01 01:00', // Finit le 1er Fev
+      2000,
+      'CONFIRMED'
+    );
+
+    // 3. Réservation ANNULÉE en Janvier (NE COMPTE PAS)
+    $this->createReservationFull(
+      'res-cancel',
+      'p1',
+      'u1',
+      '2025-01-05 10:00',
+      '2025-01-05 12:00',
+      5000,
+      'CANCELLED' // ❌
+    );
+
+    // 4. Réservation Autre Parking (NE COMPTE PAS)
+    $this->createReservationFull(
+      'res-other-p',
+      'p2',
+      'u1',
+      '2025-01-01 10:00',
+      '2025-01-01 12:00',
+      1000,
+      'CONFIRMED'
+    );
+
+    // ACT : Calcul pour Janvier 2025
+    $start = new \DateTimeImmutable('2025-01-01 00:00:00');
+    $end   = new \DateTimeImmutable('2025-01-31 23:59:59');
+
+    $revenue = $this->repo->calculateRevenue('p1', $start, $end);
+
+    // ASSERT : Seul res-ok (1000) doit être compté
+    $this->assertEquals(1000, $revenue);
+  }
+
+  // --- HELPER METHODS ---
+
+  private function createDummyData(): void
+  {
+    $this->pdo->exec("INSERT INTO accounts (id, email, password_hash, role) VALUES ('u1', 'test@test.com', 'hash', 'USER')");
+
+    // Parking 1
+    $this->pdo->exec("INSERT INTO parkings (id, name, latitude, longitude, total_places, price_grid, opening_hours, subscription_plans, owner_id) 
+            VALUES ('p1', 'Parking Test 1', 0, 0, 10, '{}', '{}', '[]', 'u1')");
+
+    // Parking 2 (Pour tester le filtrage)
+    $this->pdo->exec("INSERT INTO parkings (id, name, latitude, longitude, total_places, price_grid, opening_hours, subscription_plans, owner_id) 
+            VALUES ('p2', 'Parking Test 2', 0, 0, 10, '{}', '{}', '[]', 'u1')");
+  }
+
+  private function createReservationFull(string $id, string $pid, string $uid, string $start, string $end, int $price, string $status): void
+  {
+    $stmt = $this->pdo->prepare("INSERT INTO reservations (id, user_id, parking_id, start_time, end_time, price_paid, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$id, $uid, $pid, $start, $end, $price, $status]);
   }
 }
