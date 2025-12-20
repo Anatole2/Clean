@@ -1,0 +1,59 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Chiffre d'affaires - {{ parking.name }}{% endblock %}
+
+{% block body %}
+<div class="container">
+    <hgroup>
+        <h1>💰 Chiffre d'Affaires</h1>
+        <h2>Performance financière pour : {{ parking.name }}</h2>
+    </hgroup>
+
+    <br><br>
+
+    <form method="GET" action="" class="grid">
+        <label>
+            Mois
+            <select name="month" onchange="this.form.submit()">
+                {% for m in 1..12 %}
+                    <option value="{{ m }}" {% if m == month %}selected{% endif %}>
+                        {{ date('2025-' ~ m ~ '-01')|date('F') }}
+                    </option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            Année
+            <input type="number" name="year" value="{{ year }}" onchange="this.form.submit()">
+        </label>
+    </form>
+
+    <hr>
+
+    <div class="grid" style="text-align: center;">
+        <article style="border-top: 5px solid #3498db;">
+            <header>Réservations (Passage)</header>
+            <h3 style="color: #3498db;">{{ revRes|number_format(2, ',') }} €</h3>
+        </article>
+
+        <article style="border-top: 5px solid #9b59b6;">
+            <header>Abonnements</header>
+            <h3 style="color: #9b59b6;">{{ revSub|number_format(2, ',') }} €</h3>
+        </article>
+
+        <article style="background-color: #2ecc71; color: white;">
+            <header>TOTAL MENSUEL</header>
+            <h1 style="color: white; margin-bottom: 0;">{{ total|number_format(2, ',') }} €</h1>
+        </article>
+    </div>
+
+    <article>
+        <header>Détails</header>
+        <p>Le calcul prend en compte :</p>
+        <ul>
+            <li>Les réservations terminées durant ce mois.</li>
+            <li>Les abonnements ayant débuté (facturés) durant ce mois.</li>
+        </ul>
+    </article>
+</div>
+{% endblock %}

@@ -142,6 +142,26 @@ class SqlUserSubscriptionRepository implements UserSubscriptionRepositoryInterfa
 
     return (int) $stmt->fetchColumn();
   }
+  public function calculateRevenue(string $parkingId, \DateTimeImmutable $start, \DateTimeImmutable $end): int
+  {
+    // On somme le price des abonnements dont la date de DÉBUT (achat) est dans le mois
+    // Note: Utilise bien 'start_date' comme vu précédemment
+    $stmt = $this->connection->prepare("
+            SELECT SUM(price) FROM user_subscriptions 
+            WHERE parking_id = :pid 
+            AND start_date >= :start 
+            AND start_date <= :end
+            -- AND is_active = 1 (Optionnel : on compte même si annulé plus tard ? Généralement oui en compta brute, sinon décommente)
+        ");
+
+    $stmt->execute([
+      'pid' => $parkingId,
+      'start' => $start->format('Y-m-d H:i:s'),
+      'end' => $end->format('Y-m-d H:i:s')
+    ]);
+
+    return (int) $stmt->fetchColumn();
+  }
   private function hydrate(array $row): UserSubscription
   {
     $scheduleConfig = json_decode($row['schedule_json'] ?? '[]', true) ?: [];

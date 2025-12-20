@@ -31,4 +31,9 @@ interface UserSubscriptionRepositoryInterface
   public function findByUserId(string $userId): array;
 
   public function countActiveAt(string $parkingId, DateTimeImmutable $time): int;
+
+  /**
+   * Calcule la somme des abonnements vendus (débutant) dans la plage donnée.
+   */
+  public function calculateRevenue(string $parkingId, \DateTimeImmutable $start, \DateTimeImmutable $end): int;
 }

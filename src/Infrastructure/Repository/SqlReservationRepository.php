@@ -125,6 +125,26 @@ class SqlReservationRepository implements ReservationRepositoryInterface
 
     return (int) $stmt->fetchColumn();
   }
+  public function calculateRevenue(string $parkingId, \DateTimeImmutable $start, \DateTimeImmutable $end): int
+  {
+    // On somme le price_paid des réservations CONFIRMÉES dont la date de FIN est dans le mois
+    $stmt = $this->connection->prepare("
+            SELECT SUM(price_paid) FROM reservations 
+            WHERE parking_id = :pid 
+            AND end_time >= :start 
+            AND end_time <= :end 
+            AND status = 'CONFIRMED'
+        ");
+
+    $stmt->execute([
+      'pid' => $parkingId,
+      'start' => $start->format('Y-m-d H:i:s'),
+      'end' => $end->format('Y-m-d H:i:s')
+    ]);
+
+    // Si null (pas de résultats), on retourne 0
+    return (int) $stmt->fetchColumn();
+  }
   private function hydrate(array $row): Reservation
   {
     return new Reservation(

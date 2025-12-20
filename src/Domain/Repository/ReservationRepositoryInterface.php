@@ -28,4 +28,9 @@ interface ReservationRepositoryInterface
   public function findByParkingId(string $parkingId): array;
 
   public function countActiveAt(string $parkingId, \DateTimeImmutable $time): int;
+
+  /**
+   * Calcule la somme des prix payés pour les réservations terminées dans la plage donnée.
+   */
+  public function calculateRevenue(string $parkingId, \DateTimeImmutable $start, \DateTimeImmutable $end): int;
 }
