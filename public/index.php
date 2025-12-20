@@ -35,6 +35,7 @@ use App\Infrastructure\Controller\User\GetParkingSessionsController;
 use App\Infrastructure\Controller\Owner\UpdateParkingPriceController;
 use App\Infrastructure\Controller\Owner\ShowUpdateParkingHoursFormController;
 use App\Infrastructure\Controller\Owner\UpdateParkingHoursController;
+use App\Infrastructure\Controller\Owner\GetParkingReservationsController;
 // --- DÉBUT DU BLOC GLOBAL ---
 try {
 
@@ -59,6 +60,8 @@ try {
     $r->addRoute('POST', '/parkings/{id}/prices', UpdateParkingPriceController::class);
     $r->addRoute('GET', '/parkings/{parkingId}/hours', ShowUpdateParkingHoursFormController::class);
     $r->addRoute('POST', '/parkings/{parkingId}/hours', UpdateParkingHoursController::class);
+    $r->addRoute('GET', '/parkings/{id}/reservations', GetParkingReservationsController::class);
+
     // User
     $r->addRoute('GET', '/search', SearchParkingsController::class);
     $r->addRoute('GET', '/reservation/new', ShowReservationFormController::class);

@@ -92,7 +92,22 @@ class SqlReservationRepository implements ReservationRepositoryInterface
     // CORRECTION : Appel à la méthode qu'on définit juste en dessous
     return $row ? $this->hydrate($row) : null;
   }
+  public function findByParkingId(string $parkingId): array
+  {
+    $stmt = $this->connection->prepare("
+            SELECT * FROM reservations 
+            WHERE parking_id = :pid 
+            ORDER BY start_time DESC
+        ");
+    $stmt->execute(['pid' => $parkingId]);
 
+    $reservations = [];
+    while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+      $reservations[] = $this->hydrate($row);
+    }
+
+    return $reservations;
+  }
   private function hydrate(array $row): Reservation
   {
     return new Reservation(

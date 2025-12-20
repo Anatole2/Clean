@@ -23,4 +23,7 @@ interface ReservationRepositoryInterface
   public function findActiveForUser(string $userId, string $parkingId, \DateTimeImmutable $now): ?\App\Domain\Entity\Reservation;
 
   public function findById(string $id): ?\App\Domain\Entity\Reservation;
+
+  /** @return Reservation[] */
+  public function findByParkingId(string $parkingId): array;
 }

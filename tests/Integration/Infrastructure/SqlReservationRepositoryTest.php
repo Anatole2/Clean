@@ -105,8 +105,14 @@ class SqlReservationRepositoryTest extends IntegrationTestCase
   private function createDummyData(): void
   {
     $this->pdo->exec("INSERT INTO accounts (id, email, password_hash, role) VALUES ('u1', 'test@test.com', 'hash', 'USER')");
+
+    // Parking 1
     $this->pdo->exec("INSERT INTO parkings (id, name, latitude, longitude, total_places, price_grid, opening_hours, subscription_plans, owner_id) 
-            VALUES ('p1', 'Parking Test', 0, 0, 10, '{}', '{}', '[]', 'u1')");
+            VALUES ('p1', 'Parking Test 1', 0, 0, 10, '{}', '{}', '[]', 'u1')");
+
+    // Parking 2 (Pour tester le filtrage)
+    $this->pdo->exec("INSERT INTO parkings (id, name, latitude, longitude, total_places, price_grid, opening_hours, subscription_plans, owner_id) 
+            VALUES ('p2', 'Parking Test 2', 0, 0, 10, '{}', '{}', '[]', 'u1')");
   }
   public function testFindById(): void
   {
@@ -156,5 +162,45 @@ class SqlReservationRepositoryTest extends IntegrationTestCase
     // Vérification de l'ordre (Décroissant par date de début)
     $this->assertEquals('r1', $results[0]->getId()); // Le plus récent (Février)
     $this->assertEquals('r2', $results[1]->getId()); // Le plus vieux (Janvier)
+  }
+  public function testFindByParkingIdReturnsCorrectReservationsOrderedByDateDesc(): void
+  {
+    // 1. ARRANGE
+
+    // Réservation R1 : Parking P1, Date Récente (14h-16h) -> Doit être premier
+    $r1 = new Reservation('res-recent', 'u1', 'p1', new DateTimeImmutable('2025-01-01 14:00'), new DateTimeImmutable('2025-01-01 16:00'), 100);
+    $this->repo->save($r1);
+
+    // Réservation R2 : Parking P1, Date Ancienne (08h-10h) -> Doit être deuxième
+    $r2 = new Reservation('res-old', 'u1', 'p1', new DateTimeImmutable('2025-01-01 08:00'), new DateTimeImmutable('2025-01-01 10:00'), 100);
+    $this->repo->save($r2);
+
+    // Réservation R3 : Parking P2 (Ne doit PAS être récupérée)
+    $r3 = new Reservation('res-other', 'u1', 'p2', new DateTimeImmutable('2025-01-01 10:00'), new DateTimeImmutable('2025-01-01 11:00'), 100);
+    $this->repo->save($r3);
+
+
+
+    // 2. ACT
+    $reservations = $this->repo->findByParkingId('p1');
+
+    // 3. ASSERT
+    $this->assertCount(2, $reservations, "On ne doit récupérer que les réservations de p1");
+
+    // Vérification du tri (Le plus récent en premier)
+    $this->assertEquals('res-recent', $reservations[0]->getId());
+    $this->assertEquals('res-old', $reservations[1]->getId());
+
+    // Vérification que c'est bien le bon parking
+    $this->assertEquals('p1', $reservations[0]->getParkingId());
+  }
+
+  public function testFindByParkingIdReturnsEmptyIfNoReservations(): void
+  {
+    // On cherche sur p2 (qui a été créé dans createDummyData mais n'a pas de réservation pour ce test)
+    $reservations = $this->repo->findByParkingId('p2');
+
+    $this->assertIsArray($reservations);
+    $this->assertEmpty($reservations);
   }
 }

@@ -1,0 +1,59 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Réservations - {{ parking.name }}{% endblock %}
+
+{% block body %}
+<div class="container">
+    <hgroup>
+        <h1>📅 Réservations</h1>
+        <h2>Historique pour : {{ parking.name }}</h2>
+    </hgroup>
+
+    <!-- <div class="grid"> -->
+    <!--     <a href="/parkings" role="button" class="secondary outline">← Retour liste</a> -->
+    <!-- </div> -->
+
+    <br>
+
+    {% if reservations is empty %}
+        <article>
+            <p>Aucune réservation trouvée pour ce parking.</p>
+        </article>
+    {% else %}
+        <figure>
+            <table role="grid">
+                <thead>
+                    <tr>
+                        <th>Client (ID)</th>
+                        <th>Début</th>
+                        <th>Fin</th>
+                        <th>Prix</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for res in reservations %}
+                        <tr>
+                            <td><small>{{ res.userId }}</small></td>
+                            <td>{{ res.startTime|date('d/m/Y H:i') }}</td>
+                            <td>{{ res.endTime|date('d/m/Y H:i') }}</td>
+                            <td>{{ (res.pricePaid / 100)|number_format(2, ',') }} €</td>
+                            <td>
+                                {% if res.status == 'CONFIRMED' %}
+                                    <span style="color: green;">Confirmé</span>
+                                {% elseif res.status == 'CANCELLED' %}
+                                    <span style="color: red;">Annulé</span>
+                                {% elseif res.status == 'COMPLETED' %}
+                                    <span style="color: grey;">Terminé</span>
+                                {% else %}
+                                    {{ res.status }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </figure>
+    {% endif %}
+</div>
+{% endblock %}
