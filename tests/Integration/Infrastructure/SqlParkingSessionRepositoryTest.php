@@ -217,6 +217,28 @@ class SqlParkingSessionRepositoryTest extends IntegrationTestCase
     // Vérif Parking ID
     $this->assertEquals('p1', $results[0]->getParkingId());
   }
+  public function testFindActiveSessionsByParkingId(): void
+  {
+    // 1. Session ACTIVE (Exit time NULL) -> Doit être trouvée
+    $s1 = new ParkingSession('s-active', 'p1', 'u1', null, new DateTimeImmutable());
+    $this->repo->save($s1);
+
+    // 2. Session TERMINÉE (Exit time défini) -> Ne doit PAS être trouvée
+    $s2 = new ParkingSession('s-closed', 'p1', 'u1', null, new DateTimeImmutable());
+    $s2->close(new DateTimeImmutable(), 100);
+    $this->repo->save($s2);
+
+    // 3. Session ACTIVE mais autre parking -> Ne doit PAS être trouvée
+    $s3 = new ParkingSession('s-other', 'p2', 'u1', null, new DateTimeImmutable());
+    $this->repo->save($s3);
+
+    // ACT
+    $results = $this->repo->findActiveSessionsByParkingId('p1');
+
+    // ASSERT
+    $this->assertCount(1, $results);
+    $this->assertEquals('s-active', $results[0]->getId());
+  }
   // --- Helpers ---
 
   private function createDummyData(): void
