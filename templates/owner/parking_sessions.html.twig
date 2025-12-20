@@ -1,0 +1,80 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Sessions - {{ parking.name }}{% endblock %}
+
+{% block body %}
+<div class="container">
+    <hgroup>
+        <h1>🚦 Gestion des Entrées/Sorties</h1>
+        <h2>Supervision pour : {{ parking.name }}</h2>
+    </hgroup>
+
+    <br><br>
+
+    {% if sessions is empty %}
+        <article>Aucun véhicule n'est jamais entré dans ce parking.</article>
+    {% else %}
+        <figure>
+            <table role="grid">
+                <thead>
+                    <tr>
+                        <th>État</th>
+                        <th>Client</th>
+                        <th>Entrée</th>
+                        <th>Sortie / Durée</th>
+                        <th>Prix payé</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set now = date() %}
+
+                    {% for session in sessions %}
+                        <tr {% if not session.isOngoing %}style="opacity: 0.6"{% endif %}>
+                            
+                            {# --- COLONNE ETAT --- #}
+                            <td>
+                                {% if session.isOngoing %}
+                                    <span style="background: #2ecc71; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">
+                                        EN COURS
+                                    </span>
+                                {% else %}
+                                    <span style="background: #95a5a6; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8em;">
+                                        TERMINÉ
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td><small>{{ session.userId }}</small></td>
+                            
+                            <td>{{ session.entryTime|date('d/m H:i') }}</td>
+                            
+                            <td>
+                                {% if session.isOngoing %}
+                                    {# Calcul du temps présent depuis l'entrée #}
+                                    <em style="color: #27ae60;">
+                                        Présent depuis : {{ session.entryTime.diff(now).format('%hh %imin') }}
+                                    </em>
+                                {% else %}
+                                    {# Date de sortie #}
+                                    {{ session.exitTime|date('d/m H:i') }}
+                                    <br>
+                                    {# Durée totale #}
+                                    <small>Durée : {{ session.entryTime.diff(session.exitTime).format('%hh %imin') }}</small>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if session.pricePaid > 0 %}
+                                    {{ (session.pricePaid / 100)|number_format(2, ',') }} €
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </figure>
+    {% endif %}
+</div>
+{% endblock %}

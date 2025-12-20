@@ -95,6 +95,23 @@ class SqlParkingSessionRepository implements ParkingSessionRepositoryInterface
     }
     return $sessions;
   }
+  public function findByParkingId(string $parkingId): array
+  {
+    $stmt = $this->pdo->prepare("
+            SELECT * FROM parking_sessions 
+            WHERE parking_id = :pid 
+            ORDER BY entry_time DESC
+        ");
+
+    $stmt->execute(['pid' => $parkingId]);
+
+    $sessions = [];
+    while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+      $sessions[] = $this->hydrate($row);
+    }
+
+    return $sessions;
+  }
   private function hydrate(array $row): ParkingSession
   {
 

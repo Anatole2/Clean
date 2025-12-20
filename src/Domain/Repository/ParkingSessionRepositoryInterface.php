@@ -23,9 +23,15 @@ interface ParkingSessionRepositoryInterface
    * * C'est crucial pour le calcul de capacité.
    */
   public function countOverstayingCars(string $parkingId, \DateTimeImmutable $checkTime): int;
+
   /**
    * Récupère tout l'historique des sessions (actives et terminées) d'un user.
    * @return ParkingSession[]
    */
   public function findByUserId(string $userId): array;
+
+  /** * Récupère toutes les sessions (en cours et terminées) d'un parking
+   * @return ParkingSession[] 
+   */
+  public function findByParkingId(string $parkingId): array;
 }
