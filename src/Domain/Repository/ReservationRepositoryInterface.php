@@ -26,4 +26,6 @@ interface ReservationRepositoryInterface
 
   /** @return Reservation[] */
   public function findByParkingId(string $parkingId): array;
+
+  public function countActiveAt(string $parkingId, \DateTimeImmutable $time): int;
 }

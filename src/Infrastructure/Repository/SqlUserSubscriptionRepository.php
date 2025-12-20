@@ -123,6 +123,25 @@ class SqlUserSubscriptionRepository implements UserSubscriptionRepositoryInterfa
     }
     return $results;
   }
+  public function countActiveAt(string $parkingId, \DateTimeImmutable $time): int
+  {
+    $sql = "
+            SELECT COUNT(*) 
+            FROM user_subscriptions
+            WHERE parking_id = :parking_id
+            AND start_date <= :check_time
+            AND end_date > :check_time
+            AND is_active = 1
+        ";
+
+    $stmt = $this->connection->prepare($sql);
+    $stmt->execute([
+      'parking_id' => $parkingId,
+      'check_time' => $time->format('Y-m-d H:i:s')
+    ]);
+
+    return (int) $stmt->fetchColumn();
+  }
   private function hydrate(array $row): UserSubscription
   {
     $scheduleConfig = json_decode($row['schedule_json'] ?? '[]', true) ?: [];

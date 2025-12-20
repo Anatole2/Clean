@@ -29,4 +29,6 @@ interface UserSubscriptionRepositoryInterface
 
   // Tu auras sans doute besoin de ça plus tard pour l'espace User :
   public function findByUserId(string $userId): array;
+
+  public function countActiveAt(string $parkingId, DateTimeImmutable $time): int;
 }

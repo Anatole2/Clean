@@ -108,6 +108,23 @@ class SqlReservationRepository implements ReservationRepositoryInterface
 
     return $reservations;
   }
+  public function countActiveAt(string $parkingId, \DateTimeImmutable $time): int
+  {
+    $stmt = $this->connection->prepare("
+            SELECT COUNT(*) FROM reservations 
+            WHERE parking_id = :pid 
+            AND start_time <= :time 
+            AND end_time > :time 
+            AND status = 'CONFIRMED'
+        ");
+
+    $stmt->execute([
+      'pid' => $parkingId,
+      'time' => $time->format('Y-m-d H:i:s')
+    ]);
+
+    return (int) $stmt->fetchColumn();
+  }
   private function hydrate(array $row): Reservation
   {
     return new Reservation(

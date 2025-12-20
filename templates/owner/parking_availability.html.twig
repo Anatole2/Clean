@@ -1,0 +1,62 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Disponibilité - {{ parking.name }}{% endblock %}
+
+{% block body %}
+<div class="container">
+    <hgroup>
+        <h1>📊 Tableau de bord Capacité</h1>
+        <h2>Prévisions pour : {{ parking.name }}</h2>
+    </hgroup>
+
+    <br><br>
+
+    <form method="GET" action="" style="padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+        <label for="date-select"><strong>Vérifier la disponibilité pour le :</strong></label>
+        <div class="grid">
+            <input type="datetime-local" id="date-select" name="date" 
+                   value="{{ checkTime|date('Y-m-d\\TH:i') }}" required>
+            <button type="submit">🔍 Actualiser</button>
+        </div>
+    </form>
+
+    <hr>
+    <article style="margin-bottom: 10px; margin-top: 30px; text-align: center; border: 2px solid {% if available > 0 %}#2ecc71{% else %}#e74c3c{% endif %};">
+        <header style="background-color: {% if available > 0 %}#2ecc71{% else %}#e74c3c{% endif %}; color: white;">
+            PLACES DISPONIBLES
+        </header>
+        <h1 style="font-size: 4rem; margin: 20px 0; color: {% if available > 0 %}#27ae60{% else %}#c0392b{% endif %};">
+            {{ available }}
+        </h1>
+        <p>sur {{ total }} places au total</p>
+    </article>
+
+    <div class="grid" style="text-align: center; gap: 20px;">
+        
+        <article>
+            <header>Capacité Totale</header>
+            <h2 style="margin:0;">{{ total }}</h2>
+        </article>
+
+        <article style="border-left: 5px solid orange;">
+            <header>Réservations</header>
+            <h3 style="margin:0;">{{ reserved }}</h3>
+        </article>
+
+        <article style="border-left: 5px solid #3498db;">
+            <header>Abonnés</header>
+            <h3 style="margin:0;">{{ subscribed }}</h3>
+        </article>
+
+        <article style="border-left: 5px solid {% if squatters > 0 %}red{% else %}grey{% endif %};">
+            <header>Squatteurs</header>
+            <h3 style="margin:0; color: {% if squatters > 0 %}red{% else %}inherit{% endif %};">
+                {{ squatters }}
+            </h3>
+        </article>
+    </div>
+
+    
+
+</div>
+{% endblock %}
