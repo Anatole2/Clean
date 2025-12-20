@@ -83,11 +83,29 @@ $c = [];
 
 // --- 1. Base de données ---
 $c[PDO::class] = function () {
-  $host = getenv('MYSQL_HOST') ?: 'mysql';
-  $db   = getenv('MYSQL_DATABASE') ?: 'parking_db';
-  $user = getenv('MYSQL_USER') ?: 'user';
-  $pass = getenv('MYSQL_PASSWORD') ?: 'password';
-  return new PDO("mysql:host=$host;dbname=$db", $user, $pass, [
+  // A. DÉTECTION DU MODE TEST
+  // On regarde si le header 'X-Test-Mode' est présent (envoyé par Guzzle dans tes tests)
+  $isTestMode = isset($_SERVER['HTTP_X_TEST_MODE']) && $_SERVER['HTTP_X_TEST_MODE'] === 'true';
+
+  if ($isTestMode) {
+    // --- B. CONFIGURATION TEST ---
+    // On utilise les credentials de la base de test
+    // Assure-toi que ces valeurs correspondent à celles utilisées dans ton Docker MySQL
+    $host = getenv('DB_TEST_HOST') ?: 'mysql';
+    $db   = getenv('DB_TEST_DATABASE') ?: 'sharedParkingTest';
+    $user = getenv('DB_TEST_USER') ?: 'root';     // Souvent root pour les tests en local
+    $pass = getenv('DB_TEST_PASSWORD') ?: 'root'; // Souvent root pour les tests en local
+  } else {
+    // --- C. CONFIGURATION NORMALE (Prod/Dev) ---
+    // Ton code original
+    $host = getenv('MYSQL_HOST') ?: 'mysql';
+    $db   = getenv('MYSQL_DATABASE') ?: 'parking_db';
+    $user = getenv('MYSQL_USER') ?: 'user';
+    $pass = getenv('MYSQL_PASSWORD') ?: 'password';
+  }
+
+  // D. CRÉATION DE LA CONNEXION
+  return new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass, [
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
   ]);
