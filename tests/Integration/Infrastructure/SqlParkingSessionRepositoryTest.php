@@ -170,18 +170,69 @@ class SqlParkingSessionRepositoryTest extends IntegrationTestCase
     $this->assertIsArray($results);
     $this->assertEmpty($results);
   }
+  public function testFindByParkingIdReturnsCorrectSessionsOrderedByEntryDesc(): void
+  {
+    // ARRANGE
+
+    // Session 1 (P1) : Récente (12:00)
+    $s1 = new ParkingSession(
+      's-recent',
+      'p1',
+      'u1',
+      null,
+      new DateTimeImmutable('2024-01-01 12:00:00')
+    );
+    $this->repo->save($s1);
+
+    // Session 2 (P1) : Ancienne (10:00)
+    $s2 = new ParkingSession(
+      's-old',
+      'p1',
+      'u1',
+      null,
+      new DateTimeImmutable('2024-01-01 10:00:00')
+    );
+    $this->repo->save($s2);
+
+    // Session 3 (P2) : Autre parking (Ne doit pas remonter)
+    $s3 = new ParkingSession(
+      's-other',
+      'p2',
+      'u1',
+      null,
+      new DateTimeImmutable('2024-01-01 11:00:00')
+    );
+    $this->repo->save($s3);
+
+    // ACT
+    $results = $this->repo->findByParkingId('p1');
+
+    // ASSERT
+    $this->assertCount(2, $results);
+
+    // Vérif Ordre (DESC)
+    $this->assertEquals('s-recent', $results[0]->getId());
+    $this->assertEquals('s-old', $results[1]->getId());
+
+    // Vérif Parking ID
+    $this->assertEquals('p1', $results[0]->getParkingId());
+  }
   // --- Helpers ---
 
   private function createDummyData(): void
   {
-    // On utilise $this->pdo qui vient du parent IntegrationTestCase
     $this->pdo->exec("INSERT INTO accounts (id, email, password_hash, role) VALUES ('u1', 'test@test.com', 'hash', 'USER')");
     $this->pdo->exec("INSERT INTO accounts (id, email, password_hash, role) VALUES ('u2', 'other@test.com', 'hash', 'USER')");
 
+    // Parking 1
     $this->pdo->exec("INSERT INTO parkings (id, name, latitude, longitude, total_places, price_grid, opening_hours, subscription_plans, owner_id) 
             VALUES ('p1', 'Parking Test', 0, 0, 10, '{}', '{}', '[]', 'u1')");
 
-    // Initialisation des FK pour les tests
+    // Parking 2 (AJOUTÉ POUR LE TEST DE FILTRAGE)
+    $this->pdo->exec("INSERT INTO parkings (id, name, latitude, longitude, total_places, price_grid, opening_hours, subscription_plans, owner_id) 
+            VALUES ('p2', 'Parking Other', 0, 0, 10, '{}', '{}', '[]', 'u1')");
+
+    // Initialisation des FK pour les tests existants
     $this->createReservation('res-1', 'p1', 'u1', '2024-01-01 08:00', '2024-01-01 18:00');
     $this->createReservation('res-2', 'p1', 'u1', '2024-01-01 08:00', '2024-01-01 18:00');
   }
