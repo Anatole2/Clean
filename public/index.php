@@ -39,6 +39,7 @@ use App\Infrastructure\Controller\Owner\GetParkingReservationsController;
 use App\Infrastructure\Controller\Owner\GetOwnerParkingSessionsController;
 use App\Infrastructure\Controller\Owner\GetParkingAvailabilityController;
 use App\Infrastructure\Controller\Owner\GetParkingRevenueController;
+use App\Infrastructure\Controller\Owner\GetUnauthorizedParkersController;
 
 // --- DÉBUT DU BLOC GLOBAL ---
 try {
@@ -68,6 +69,7 @@ try {
     $r->addRoute('GET', '/parkings/{id}/sessions', GetOwnerParkingSessionsController::class);
     $r->addRoute('GET', '/parkings/{id}/availability', GetParkingAvailabilityController::class);
     $r->addRoute('GET', '/parkings/{id}/revenue', GetParkingRevenueController::class);
+    $r->addRoute('GET', '/parkings/{id}/unauthorized', GetUnauthorizedParkersController::class);
 
     // User
     $r->addRoute('GET', '/search', SearchParkingsController::class);

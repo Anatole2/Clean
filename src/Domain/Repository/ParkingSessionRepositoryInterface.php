@@ -34,4 +34,10 @@ interface ParkingSessionRepositoryInterface
    * @return ParkingSession[] 
    */
   public function findByParkingId(string $parkingId): array;
+
+  /**
+   * Récupère toutes les sessions actives (véhicules encore présents) pour un parking.
+   * @return ParkingSession[]
+   */
+  public function findActiveSessionsByParkingId(string $parkingId): array;
 }

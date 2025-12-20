@@ -1,0 +1,51 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Infractions - {{ parking.name }}{% endblock %}
+
+{% block body %}
+<div class="container">
+    <hgroup>
+        <h1 style="color: #c0392b;">🚨 Véhicules hors créneau</h1>
+        <h2>Conducteurs présents sans réservation ni abonnement valide.</h2>
+    </hgroup>
+
+    <br><br>
+
+    {% if squatters is empty %}
+        <article style="border-left: 5px solid #2ecc71;">
+            <strong>✅ Tout est en ordre.</strong><br>
+            Aucun véhicule n'est en infraction actuellement.
+        </article>
+    {% else %}
+        <figure>
+            <table role="grid">
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>Entrée</th>
+                        <th>Durée présence</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set now = date() %}
+                    {% for session in squatters %}
+                        <tr>
+                            <td>
+                                <strong>{{ session.userId }}</strong>
+                                <br><small>Ref: {{ session.id|slice(0,8) }}</small>
+                            </td>
+                            <td>{{ session.entryTime|date('d/m H:i') }}</td>
+                            <td>
+                                <strong style="color: #c0392b;">
+                                    {{ session.entryTime.diff(now).format('%hh %imin') }}
+                                </strong>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </figure>
+    {% endif %}
+</div>
+{% endblock %}
