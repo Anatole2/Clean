@@ -33,7 +33,6 @@ class SqlReservationRepositoryTest extends IntegrationTestCase
     $this->assertEquals(1, $count);
   }
 
-  // 👇 NOUVEAU TEST
   public function testFindActiveForUserReturnsReservationWhenValid(): void
   {
     // ARRANGE
@@ -53,7 +52,6 @@ class SqlReservationRepositoryTest extends IntegrationTestCase
     $this->assertEquals('res-active', $found->getId());
   }
 
-  // 👇 NOUVEAU TEST
   public function testFindActiveForUserReturnsNullIfTimeIsOutside(): void
   {
     // ARRANGE
@@ -79,7 +77,6 @@ class SqlReservationRepositoryTest extends IntegrationTestCase
     $this->assertNull($tooLate, "Ne doit pas trouver si trop tard");
   }
 
-  // 👇 NOUVEAU TEST
   public function testFindActiveForUserReturnsNullIfCancelled(): void
   {
     // ARRANGE
@@ -202,5 +199,62 @@ class SqlReservationRepositoryTest extends IntegrationTestCase
 
     $this->assertIsArray($reservations);
     $this->assertEmpty($reservations);
+  }
+  public function testCountActiveAt(): void
+  {
+    // 1. Réservation ACTIVE (10h - 14h)
+    $resActive = new Reservation(
+      'res-active',
+      'u1',
+      'p1',
+      new DateTimeImmutable('2025-01-01 10:00'),
+      new DateTimeImmutable('2025-01-01 14:00'),
+      500,
+      'CONFIRMED'
+    );
+    $this->repo->save($resActive);
+
+    // 2. Réservation TERMINÉE (08h - 10h)
+    $resPast = new Reservation(
+      'res-past',
+      'u1',
+      'p1',
+      new DateTimeImmutable('2025-01-01 08:00'),
+      new DateTimeImmutable('2025-01-01 10:00'), // Fini pile quand l'autre commence ou avant
+      500,
+      'CONFIRMED'
+    );
+    $this->repo->save($resPast);
+
+    // 3. Réservation FUTURE (14h - 16h)
+    $resFuture = new Reservation(
+      'res-future',
+      'u1',
+      'p1',
+      new DateTimeImmutable('2025-01-01 14:00'), // Commence après
+      new DateTimeImmutable('2025-01-01 16:00'),
+      500,
+      'CONFIRMED'
+    );
+    $this->repo->save($resFuture);
+
+    // 4. Réservation ANNULÉE (Couvre la période mais annulée)
+    $resCancelled = new Reservation(
+      'res-cancelled',
+      'u1',
+      'p1',
+      new DateTimeImmutable('2025-01-01 10:00'),
+      new DateTimeImmutable('2025-01-01 14:00'),
+      500,
+      'CANCELLED' // ❌
+    );
+    $this->repo->save($resCancelled);
+
+    // ACT : On vérifie à 12:00 (Midi)
+    $checkTime = new DateTimeImmutable('2025-01-01 12:00:00');
+    $count = $this->repo->countActiveAt('p1', $checkTime);
+
+    // ASSERT : Seule la réservation active et confirmée compte
+    $this->assertEquals(1, $count);
   }
 }

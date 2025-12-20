@@ -233,6 +233,77 @@ class SqlUserSubscriptionRepositoryTest extends IntegrationTestCase
     $this->assertEquals('sub-u1-recent', $results[0]->getId());
     $this->assertEquals('sub-u1-old', $results[1]->getId());
   }
+  public function testCountActiveAt(): void
+  {
+    $schedule = new WeeklySchedule([]); // 24/7
+
+    // 1. Abonnement ACTIF (Couvre le 15 Janvier)
+    $subActive = new UserSubscription(
+      'sub-active',
+      'u1',
+      'p1',
+      'plan-1',
+      'Plan A',
+      5000,
+      new DateTimeImmutable('2025-01-01 00:00'),
+      new DateTimeImmutable('2025-01-31 23:59'),
+      $schedule,
+      true // Active
+    );
+    $this->repo->save($subActive);
+
+    // 2. Abonnement PASSÉ (Fini le 10 Janvier)
+    $subPast = new UserSubscription(
+      'sub-past',
+      'u1',
+      'p1',
+      'plan-1',
+      'Plan A',
+      5000,
+      new DateTimeImmutable('2025-01-01 00:00'),
+      new DateTimeImmutable('2025-01-10 23:59'), // Fin avant le check
+      $schedule,
+      true
+    );
+    $this->repo->save($subPast);
+
+    // 3. Abonnement FUTUR (Commence le 20 Janvier)
+    $subFuture = new UserSubscription(
+      'sub-future',
+      'u1',
+      'p1',
+      'plan-1',
+      'Plan A',
+      5000,
+      new DateTimeImmutable('2025-01-20 00:00'), // Début après le check
+      new DateTimeImmutable('2025-01-31 23:59'),
+      $schedule,
+      true
+    );
+    $this->repo->save($subFuture);
+
+    // 4. Abonnement INACTIF (Couvre la date mais désactivé)
+    $subInactive = new UserSubscription(
+      'sub-inactive',
+      'u1',
+      'p1',
+      'plan-1',
+      'Plan A',
+      5000,
+      new DateTimeImmutable('2025-01-01 00:00'),
+      new DateTimeImmutable('2025-01-31 23:59'),
+      $schedule,
+      false // ❌ Inactif (ex: annulé ou paiement échoué)
+    );
+    $this->repo->save($subInactive);
+
+    // ACT : On vérifie la dispo le 15 Janvier à midi
+    $checkTime = new DateTimeImmutable('2025-01-15 12:00:00');
+    $count = $this->repo->countActiveAt('p1', $checkTime);
+
+    // ASSERT : Seul 'sub-active' doit être compté
+    $this->assertEquals(1, $count, "Doit trouver 1 seul abonnement actif à cette date précisé");
+  }
   private function createDummyData(): void
   {
     // Nettoyage (si nécessaire selon ta config, sinon ignore les DELETE)
