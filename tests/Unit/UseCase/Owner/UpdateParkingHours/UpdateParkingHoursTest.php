@@ -18,13 +18,10 @@ class UpdateParkingHoursTest extends TestCase
   public function testItUpdatesOpeningHoursSuccessfully(): void
   {
     // 1. ARRANGEMENT
-
-    // On prépare la nouvelle config : Lundi de 09h00 à 17h00
     $newScheduleConfig = [
       ['startDay' => 1, 'startTime' => '09:00', 'endDay' => 1, 'endTime' => '17:00']
     ];
 
-    // On crée un parking existant (Initialement ouvert 24/7 = tableau vide)
     $existingParking = new Parking(
       'uuid-123',
       'owner-correct',
@@ -32,24 +29,19 @@ class UpdateParkingHoursTest extends TestCase
       new GpsCoordinates(48.85, 2.35),
       50,
       new PriceGrid([60 => 100]),
-      new WeeklySchedule([]) // <--- Ancien horaire
+      new WeeklySchedule([])
     );
 
-    // Mock du Repository
     $repoMock = $this->createMock(ParkingRepositoryInterface::class);
     $repoMock->method('findById')->willReturn($existingParking);
 
     /** @var ParkingRepositoryInterface&\PHPUnit\Framework\MockObject\MockObject $repoMock */
-    // CRITIQUE : On vérifie que la méthode save est appelée avec un parking
-    // dont les horaires correspondent bien à la nouvelle config
     $repoMock->expects($this->once())
       ->method('save')
       ->with($this->callback(function (Parking $p) use ($newScheduleConfig) {
-        // On compare les tableaux bruts
         return $p->getOpeningHours()->toArray() === $newScheduleConfig;
       }));
 
-    // Création de la requête
     $request = new UpdateParkingHoursRequest(
       parkingId: 'uuid-123',
       ownerId: 'owner-correct',
@@ -62,10 +54,12 @@ class UpdateParkingHoursTest extends TestCase
 
     // 3. ASSERTION
     $this->assertInstanceOf(UpdateParkingHoursResponse::class, $response);
-    $this->assertEquals('uuid-123', $response->id);
-    $this->assertSame($newScheduleConfig, $response->openingHours);
-  }
 
+    $this->assertEquals('uuid-123', $response->parking->getId());
+
+    // On compare le tableau retourné par toArray()
+    $this->assertSame($newScheduleConfig, $response->parking->getOpeningHours()->toArray());
+  }
   public function testItThrowsExceptionIfParkingNotFound(): void
   {
     // 1. Le repository ne trouve rien

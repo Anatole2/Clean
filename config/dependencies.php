@@ -36,6 +36,7 @@ use App\UseCase\User\GetReservations\GetReservations;
 use App\UseCase\User\GenerateInvoice\GenerateInvoice;
 use App\UseCase\User\GetParkingSessions\GetParkingSessions;
 use App\UseCase\Owner\UpdateParkingPrice\UpdateParkingPrice;
+use App\UseCase\Owner\UpdateParkingHours\UpdateParkingHours;
 
 // Controllers
 use App\Infrastructure\Controller\Owner\CreateParkingController;
@@ -61,6 +62,8 @@ use App\Infrastructure\Controller\User\GetReservationsController;
 use App\Infrastructure\Controller\User\GenerateInvoiceController;
 use App\Infrastructure\Controller\User\GetParkingSessionsController;
 use App\Infrastructure\Controller\Owner\UpdateParkingPriceController;
+use App\Infrastructure\Controller\Owner\ShowUpdateParkingHoursFormController;
+use App\Infrastructure\Controller\Owner\UpdateParkingHoursController;
 
 // Twig
 use Twig\Loader\FilesystemLoader;
@@ -186,6 +189,10 @@ $c[UpdateParkingPrice::class] = fn($c) => new UpdateParkingPrice(
   $c[ParkingRepositoryInterface::class]($c)
 );
 
+$c[UpdateParkingHours::class] = fn($c) => new UpdateParkingHours(
+  $c[ParkingRepositoryInterface::class]($c)
+);
+
 // --- 6. Controllers ---
 $c[CreateParkingController::class] = function ($c) {
   return new CreateParkingController(
@@ -300,6 +307,17 @@ $c[UpdateParkingPriceController::class] = fn($c) => new UpdateParkingPriceContro
 );
 
 $c[ShowUpdateParkingPriceFormController::class] = fn($c) => new ShowUpdateParkingPriceFormController(
+  $c[ParkingRepositoryInterface::class]($c),
+  $c[Environment::class]($c)
+);
+
+$c[UpdateParkingHoursController::class] = fn($c) => new UpdateParkingHoursController(
+  $c[UpdateParkingHours::class]($c),
+  $c[PresenterFactory::class]($c),
+  $c[Environment::class]($c)
+);
+
+$c[ShowUpdateParkingHoursFormController::class] = fn($c) => new ShowUpdateParkingHoursFormController(
   $c[ParkingRepositoryInterface::class]($c),
   $c[Environment::class]($c)
 );

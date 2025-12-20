@@ -1,0 +1,60 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Horaires mis à jour{% endblock %}
+
+{% block body %}
+<div class="container" style="text-align: center; padding-top: 40px;">
+
+    {# Message de succès #}
+    <div style="color: #155724; padding: 20px; border-radius: 8px; display: inline-block; margin-bottom: 30px;">
+        <h2 style="margin: 0;">✅ Horaires enregistrés !</h2>
+        <p style="margin-top: 10px;">Le planning d'ouverture de <strong>{{ parking.name }}</strong> est à jour.</p>
+    </div>
+
+    {# Récapitulatif visuel #}
+    <div class="card" style="text-align: left; max-width: 600px; margin: 0 auto;">
+        <h3>📅 Nouveau Planning</h3>
+        
+        {# Mapping des jours pour l'affichage #}
+        {% set days = {1: 'Lundi', 2: 'Mardi', 3: 'Mercredi', 4: 'Jeudi', 5: 'Vendredi', 6: 'Samedi', 7: 'Dimanche'} %}
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Jour</th>
+                    <th>Horaires</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for slot in parking.openingHours.toArray %}
+                <tr>
+                    <td><strong>{{ days[slot.startDay] }}</strong></td>
+                    <td>
+                        {{ slot.startTime }} à {{ slot.endTime }}
+                        {% if slot.endDay != slot.startDay %}
+                            <small>(Fin le {{ days[slot.endDay] }})</small>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="2" style="text-align: center; color: red;">
+                        ⚠️ Aucun horaire défini (Fermé).
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <br><br>
+
+    {# Boutons d'action #}
+    <div class="grid" style="max-width: 500px; margin: 0 auto;">
+        <a href="/parkings/{{ parking.id }}/hours" role="button" class="secondary outline">
+            ✏️ Modifier encore
+        </a>
+    </div>
+
+</div>
+{% endblock %}

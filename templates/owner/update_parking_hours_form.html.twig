@@ -1,0 +1,182 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Modifier Horaires - {{ parking.name }}{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <hgroup>
+            <h1>🕒 Horaires d'ouverture</h1>
+            <h2>Modifier les horaires pour : {{ parking.name }}</h2>
+        </hgroup>
+
+        <br><br>
+
+        <form action="/parkings/{{ parking.id }}/hours" method="POST" onsubmit="return prepareForm()">
+            
+            <fieldset>
+                <legend><strong>Configuration des plages horaires</strong></legend>
+                <p class="help-text"><small>Ajoutez, supprimez ou modifiez les créneaux.</small></p>
+
+                <div class="grid" style="background: #f4f4f4; padding: 15px; border-radius: 8px;">
+                    <label>
+                        Jour
+                        <select id="timeDay">
+                            <option value="1">Lundi</option>
+                            <option value="2">Mardi</option>
+                            <option value="3">Mercredi</option>
+                            <option value="4">Jeudi</option>
+                            <option value="5">Vendredi</option>
+                            <option value="6">Samedi</option>
+                            <option value="7">Dimanche</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        Ouverture
+                        <input type="time" id="timeStart" value="08:00">
+                    </label>
+
+                    <label>
+                        Fermeture
+                        <input type="time" id="timeEnd" value="18:00">
+                    </label>
+
+                    <label>
+                        Action
+                        <button type="button" onclick="addTimeSlot()" class="secondary" style="margin-top: 5px;">Ajouter</button>
+                    </label>
+                </div>
+
+                <table role="grid" style="margin-top: 20px;">
+                    <thead>
+                        <tr>
+                            <th>Jour</th>
+                            <th>Horaire</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="timeSlotsListBody">
+                        </tbody>
+                </table>
+
+                <div id="hiddenHoursContainer"></div>
+
+            </fieldset>
+
+            <button type="submit">💾 Enregistrer les horaires</button>
+        </form>
+    </div>
+
+    <script>
+        // --- VARIABLES GLOBALES ---
+        let timeSlots = []; 
+        const dayNames = {1: 'Lundi', 2: 'Mardi', 3: 'Mercredi', 4: 'Jeudi', 5: 'Vendredi', 6: 'Samedi', 7: 'Dimanche'};
+
+        // --- INJECTION DES DONNÉES EXISTANTES ---
+        // C'est ici que Twig parle à JS !
+        // On boucle sur les données PHP pour remplir le tableau JS au démarrage
+        {% for slot in parking.openingHours.toArray %}
+            timeSlots.push({
+                id: Date.now() + {{ loop.index }}, // ID unique factice
+                day: {{ slot.startDay }},
+                start: "{{ slot.startTime }}",
+                end: "{{ slot.endTime }}",
+                // On gère le cas où la fermeture est le lendemain (optionnel)
+                endDay: {{ slot.endDay ?? slot.startDay }} 
+            });
+        {% endfor %}
+
+        // --- FONCTIONS JS (Identiques au CreateParking) ---
+
+        function addTimeSlot() {
+            const daySelect = document.getElementById('timeDay');
+            const startInput = document.getElementById('timeStart');
+            const endInput = document.getElementById('timeEnd');
+
+            const dayVal = parseInt(daySelect.value);
+            const startVal = startInput.value;
+            const endVal = endInput.value;
+
+            if (!startVal || !endVal) {
+                alert("Veuillez définir une heure de début et de fin.");
+                return;
+            }
+
+            if (startVal >= endVal) {
+                alert("Attention : L'heure de fin est avant l'heure de début. (Si c'est pour le lendemain, ce formulaire simple ne le gère pas encore parfaitement).");
+                // On peut autoriser mais pour l'instant on bloque pour simplifier
+                return;
+            }
+
+            const newSlot = {
+                id: Date.now(),
+                day: dayVal,
+                start: startVal,
+                end: endVal,
+                endDay: dayVal // Simplification : même jour
+            };
+            
+            timeSlots.push(newSlot);
+            sortAndRender();
+        }
+
+        function removeTimeSlot(id) {
+            timeSlots = timeSlots.filter(slot => slot.id !== id);
+            sortAndRender();
+        }
+
+        function sortAndRender() {
+            // Tri : Jour puis Heure
+            timeSlots.sort((a, b) => {
+                if (a.day !== b.day) return a.day - b.day;
+                return a.start.localeCompare(b.start);
+            });
+
+            const tbody = document.getElementById('timeSlotsListBody');
+            tbody.innerHTML = '';
+
+            timeSlots.forEach(slot => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${dayNames[slot.day]}</strong></td>
+                    <td>${slot.start} à ${slot.end}</td>
+                    <td><a href="#" onclick="removeTimeSlot(${slot.id}); return false;" style="color: red;">Supprimer</a></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function prepareForm() {
+            const hoursContainer = document.getElementById('hiddenHoursContainer');
+            hoursContainer.innerHTML = '';
+
+            if (timeSlots.length === 0) {
+                return confirm("Aucun horaire défini. Le parking sera considéré comme fermé. Continuer ?");
+            }
+
+            timeSlots.forEach((slot, index) => {
+                createHiddenInput(hoursContainer, `openingHoursConfig[${index}][startDay]`, slot.day);
+                createHiddenInput(hoursContainer, `openingHoursConfig[${index}][startTime]`, slot.start);
+                // On assume fin le même jour pour ce formulaire simple
+                createHiddenInput(hoursContainer, `openingHoursConfig[${index}][endDay]`, slot.endDay || slot.day); 
+                createHiddenInput(hoursContainer, `openingHoursConfig[${index}][endTime]`, slot.end);
+            });
+
+            return true;
+        }
+
+        function createHiddenInput(container, name, value) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value;
+            container.appendChild(input);
+        }
+
+        // --- CHARGEMENT ---
+        window.onload = function() {
+            // Au chargement, on affiche les données injectées par Twig
+            sortAndRender();
+        };
+    </script>
+{% endblock %}
