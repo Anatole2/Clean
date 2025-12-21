@@ -21,7 +21,8 @@
             {# CAS 1 : L'utilisateur n'est PAS connecté #}
             {% if user is null %}
                 <li><a href="/login">Se connecter</a></li>
-                <li><a href="/register" role="button">Créer un compte</a></li>
+                <li><a href="/register/user" role="button">Créer un compte utilisateur</a></li>
+                <li><a href="/register/owner" role="button">Créer un compte propriétaire</a></li>
 
             {# CAS 2 : L'utilisateur EST connecté #}
             {% else %}
