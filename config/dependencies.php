@@ -3,6 +3,7 @@
 date_default_timezone_set('Europe/Paris');
 
 // Repositories
+use App\Infrastructure\Repository\RepositoryFactory;
 use App\Infrastructure\Repository\SqlParkingRepository;
 use App\Infrastructure\Repository\SqlAccountRepository;
 use App\Infrastructure\Repository\SqlReservationRepository;
@@ -13,6 +14,8 @@ use App\Domain\Repository\ReservationRepositoryInterface;
 use App\Domain\Repository\UserSubscriptionRepositoryInterface;
 use App\Domain\Repository\ParkingSessionRepositoryInterface;
 use App\Infrastructure\Repository\SqlParkingSessionRepository;
+
+use MongoDB\Client;
 
 use App\Infrastructure\Service\RamseyIdGenerator;
 use App\Infrastructure\Presenter\PresenterFactory;
@@ -84,6 +87,7 @@ use Twig\Environment;
 $c = [];
 
 // --- 1. Base de données ---
+//SQL avec PDO
 $c[PDO::class] = function () {
   // A. DÉTECTION DU MODE TEST
   // On regarde si le header 'X-Test-Mode' est présent (envoyé par Guzzle dans tes tests)
@@ -113,12 +117,34 @@ $c[PDO::class] = function () {
   ]);
 };
 
+// MongoDB avec MongoDB Client
+$c[Client::class] = function () {
+  // Récupération des variables d'env (définies dans compose.yml)
+  $host = getenv('MONGO_HOST') ?: 'mongo';
+  $port = getenv('MONGO_PORT') ?: '27017';
+  $user = getenv('MONGO_USER') ?: 'root';
+  $pass = getenv('MONGO_PASSWORD') ?: 'root';
+
+  // Construction de l'URI sécurisée
+  $uri = "mongodb://$user:$pass@$host:$port";
+
+  return new Client($uri);
+};
+
 // --- 2. Repositories (MAPPING INTERFACE => IMPLEMENTATION) ---
-$c[ParkingRepositoryInterface::class] = fn($c) => new SqlParkingRepository($c[PDO::class]());
-$c[AccountRepositoryInterface::class] = fn($c) => new SqlAccountRepository($c[PDO::class]());
-$c[ReservationRepositoryInterface::class] = fn($c) => new SqlReservationRepository($c[PDO::class]());
-$c[UserSubscriptionRepositoryInterface::class] = fn($c) => new SqlUserSubscriptionRepository($c[PDO::class]());
-$c[ParkingSessionRepositoryInterface::class] = fn($c) => new SqlParkingSessionRepository($c[PDO::class]());
+/* $c[ParkingRepositoryInterface::class] = fn($c) => new SqlParkingRepository($c[PDO::class]()); */
+/* $c[AccountRepositoryInterface::class] = fn($c) => new SqlAccountRepository($c[PDO::class]()); */
+/* $c[ReservationRepositoryInterface::class] = fn($c) => new SqlReservationRepository($c[PDO::class]()); */
+/* $c[UserSubscriptionRepositoryInterface::class] = fn($c) => new SqlUserSubscriptionRepository($c[PDO::class]()); */
+/* $c[ParkingSessionRepositoryInterface::class] = fn($c) => new SqlParkingSessionRepository($c[PDO::class]()); */
+$repoFactory = new RepositoryFactory($c);
+
+$c[AccountRepositoryInterface::class] = fn() => $repoFactory->create(AccountRepositoryInterface::class);
+$c[ParkingRepositoryInterface::class] = fn() => $repoFactory->create(ParkingRepositoryInterface::class);
+$c[ReservationRepositoryInterface::class] = fn() => $repoFactory->create(ReservationRepositoryInterface::class);
+$c[UserSubscriptionRepositoryInterface::class] = fn() => $repoFactory->create(UserSubscriptionRepositoryInterface::class);
+$c[ParkingSessionRepositoryInterface::class] = fn() => $repoFactory->create(ParkingSessionRepositoryInterface::class);
+
 
 // --- 3. Services Infra ---
 $c[RamseyIdGenerator::class]    = fn() => new RamseyIdGenerator();
