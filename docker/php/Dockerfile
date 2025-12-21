@@ -5,7 +5,10 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     zip \
     unzip \
+    libssl-dev \
     && docker-php-ext-install pdo pdo_mysql zip
+
+RUN echo "date.timezone = Europe/Paris" > /usr/local/etc/php/conf.d/timezone.ini
 
 # Xdebug
 RUN pecl install xdebug && docker-php-ext-enable xdebug
