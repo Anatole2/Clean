@@ -9,8 +9,12 @@
         <h2>Supervision pour : {{ parking.name }}</h2>
     </hgroup>
 
-    <br><br>
+      <a role="button" class="secondary outline" href="/dashboard">
+        ← Retour au dashboard
+      </a>
+    <br>
 
+    <br>
     {% if sessions is empty %}
         <article>Aucun véhicule n'est jamais entré dans ce parking.</article>
     {% else %}

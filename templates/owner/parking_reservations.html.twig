@@ -9,12 +9,13 @@
         <h2>Historique pour : {{ parking.name }}</h2>
     </hgroup>
 
-    <!-- <div class="grid"> -->
-    <!--     <a href="/parkings" role="button" class="secondary outline">← Retour liste</a> -->
-    <!-- </div> -->
+    <div class="grid">
+        <a href="/dashboard" role="button" class="secondary outline">← Retour au dashboard</a>
+    </div>
 
     <br>
 
+    <br>
     {% if reservations is empty %}
         <article>
             <p>Aucune réservation trouvée pour ce parking.</p>

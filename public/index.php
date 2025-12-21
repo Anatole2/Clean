@@ -40,7 +40,7 @@ use App\Infrastructure\Controller\Owner\GetOwnerParkingSessionsController;
 use App\Infrastructure\Controller\Owner\GetParkingAvailabilityController;
 use App\Infrastructure\Controller\Owner\GetParkingRevenueController;
 use App\Infrastructure\Controller\Owner\GetUnauthorizedParkersController;
-
+use App\Infrastructure\Controller\Shared\HomeController;
 // --- DÉBUT DU BLOC GLOBAL ---
 try {
 
@@ -56,6 +56,9 @@ try {
 
   // 2. DÉFINITION DES ROUTES
   $dispatcher = simpleDispatcher(function (RouteCollector $r) {
+    // Dans ton fichier de routes
+
+    $r->addRoute('GET', '/', HomeController::class);
     // Owner
     $r->addRoute('GET', '/parkings/new', ShowCreateParkingFormController::class);
     $r->addRoute('POST', '/parkings', CreateParkingController::class);

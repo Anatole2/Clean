@@ -4,7 +4,10 @@
 
 {% block body %}
     <h1>Ajouter un nouveau parking</h1>
-
+                <a role="button" class="secondary outline" href="/dashboard">
+                    ← Retour au dashboard
+                </a>
+<br><br>
     <form action="/parkings" method="POST" id="parkingForm" onsubmit="return prepareForm()">
         
         <fieldset>

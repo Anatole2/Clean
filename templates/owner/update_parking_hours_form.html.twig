@@ -9,8 +9,12 @@
             <h2>Modifier les horaires pour : {{ parking.name }}</h2>
         </hgroup>
 
-        <br><br>
+          <a role="button" class="secondary outline" href="/dashboard">
+             ← Retour au dashboard
+          </a>
+        <br>
 
+        <br>
         <form action="/parkings/{{ parking.id }}/hours" method="POST" onsubmit="return prepareForm()">
             
             <fieldset>

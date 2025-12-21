@@ -4,44 +4,85 @@
 
 {% block body %}
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-        <h1>🚘 Mes Parkings</h1>
+        <hgroup>
+            <h1>🚘 Mes Parkings</h1>
+            <p>Gérez vos emplacements, tarifs et surveillez votre activité.</p>
+        </hgroup>
         <a href="/parkings/new" role="button">➕ Ajouter un parking</a>
     </div>
 
     <hr>
 
     {% if parkings is empty %}
-        <div style="text-align: center; padding: 3rem;">
+        <article style="text-align: center; padding: 3rem;">
             <h3>Vous n'avez pas encore de parking.</h3>
             <p>Commencez à gérer votre activité en ajoutant votre premier emplacement.</p>
-            <a href="/parkings/new" role="button" class="secondary">Créer mon premier parking</a>
-        </div>
+            <footer>
+                <a href="/parkings/new" role="button" class="contrast">Créer mon premier parking</a>
+            </footer>
+        </article>
     {% else %}
         <figure>
             <table role="grid">
                 <thead>
                     <tr>
-                        <th scope="col">Nom</th>
+                        <th scope="col">Parking</th>
                         <th scope="col">Capacité</th>
-                        <th scope="col">Coordonnées</th>
-                        <th scope="col">Actions</th>
+                        <th scope="col" style="text-align: center;">Configuration</th>
+                        <th scope="col" style="text-align: center;">Activité</th>
+                        <th scope="col" style="text-align: center;">Finance & Sécurité</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for parking in parkings %}
                         <tr>
-                            <td><strong>{{ parking.name }}</strong></td>
-                            <td>{{ parking.totalPlaces }} places</td>
+                            {# 1. INFO PARKING #}
                             <td>
-                                <small>
-                                    Lat: {{ parking.latitude }}<br>
-                                    Lon: {{ parking.longitude }}
+                                <strong>{{ parking.name }}</strong><br>
+                                <small class="text-muted">
+                                    📍 Lat: {{ parking.latitude|number_format(4) }}, Lon: {{ parking.longitude|number_format(4) }}
                                 </small>
                             </td>
+
+                            {# 2. CAPACITÉ #}
                             <td>
-                                <a href="/parkings/{{ parking.id }}/manage" role="button" class="outline">
-                                    ⚙️ Gérer
-                                </a>
+                                {{ parking.totalPlaces }} places
+                            </td>
+
+                            {# 3. ACTIONS : CONFIGURATION #}
+                            <td style="text-align: center;">
+                                <details class="dropdown">
+                                    <summary role="button" class="outline secondary">⚙️ Configurer</summary>
+                                    <ul>
+                                        <li><a href="/parkings/{{ parking.id }}/prices">💶 Modifier les Tarifs</a></li>
+                                        <li><a href="/parkings/{{ parking.id }}/hours">🕒 Modifier les Horaires</a></li>
+                                        <li><a href="/parkings/{{ parking.id }}/plans/new">➕ Ajouter un Abonnement</a></li>
+                                    </ul>
+                                </details>
+                            </td>
+
+                            {# 4. ACTIONS : ACTIVITÉ (Au quotidien) #}
+                            <td style="text-align: center;">
+                                <details class="dropdown">
+                                    <summary role="button" class="outline">📊 Suivi</summary>
+                                    <ul>
+                                        <li><a href="/parkings/{{ parking.id }}/reservations">📅 Liste des Réservations</a></li>
+                                        <li><a href="/parkings/{{ parking.id }}/sessions">🚗 Véhicules garés (Sessions)</a></li>
+                                        <li><a href="/parkings/{{ parking.id }}/availability">🔍 Vérifier Disponibilité</a></li>
+                                    </ul>
+                                </details>
+                            </td>
+
+                            {# 5. ACTIONS : FINANCE & ALERTES #}
+                            <td style="text-align: center;">
+                                <div class="grid">
+                                    <a href="/parkings/{{ parking.id }}/revenue" data-tooltip="Voir le Chiffre d'Affaires" role="button" class="contrast outline" style="padding: 0.5rem;">
+                                        💰
+                                    </a>
+                                    <a href="/parkings/{{ parking.id }}/unauthorized" data-tooltip="Véhicules non autorisés" role="button" class="assertive outline" style="border-color: var(--pico-del-color); color: var(--pico-del-color); padding: 0.5rem;">
+                                        🚨
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     {% endfor %}
@@ -49,4 +90,15 @@
             </table>
         </figure>
     {% endif %}
+
+    {# Script pour fermer les dropdowns quand on clique ailleurs (Optionnel mais UX friendly) #}
+    <script>
+        document.addEventListener("click", (event) => {
+            document.querySelectorAll("details.dropdown").forEach((details) => {
+                if (!details.contains(event.target)) {
+                    details.removeAttribute("open");
+                }
+            });
+        });
+    </script>
 {% endblock %}

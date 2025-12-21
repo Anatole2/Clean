@@ -75,6 +75,8 @@ use App\Infrastructure\Controller\Owner\GetParkingAvailabilityController;
 use App\Infrastructure\Controller\Owner\GetParkingRevenueController;
 use App\Infrastructure\Controller\Owner\GetUnauthorizedParkersController;
 
+use App\Infrastructure\Controller\Shared\HomeController;
+
 // Twig
 use Twig\Loader\FilesystemLoader;
 use Twig\Environment;
@@ -403,6 +405,10 @@ $c[GetParkingRevenueController::class] = fn($c) => new GetParkingRevenueControll
 $c[GetUnauthorizedParkersController::class] = fn($c) => new GetUnauthorizedParkersController(
   $c[GetUnauthorizedParkers::class]($c),
   $c[PresenterFactory::class]($c)
+);
+
+$c[HomeController::class] = fn($c) => new HomeController(
+  $c[Environment::class]($c)
 );
 
 // --- 7. Configuration de Twig ---

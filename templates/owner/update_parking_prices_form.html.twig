@@ -5,8 +5,12 @@
 {% block body %}
     <div class="container">
         <h1>💰 Grille Tarifaire : {{ parking.name }}</h1>
-        <br><br>
+        <br>
+          <a role="button" class="secondary outline" href="/dashboard">
+            ← Retour au dashboard
+          </a>
 
+<br><br>
         <form action="/parkings/{{ parking.id }}/prices" method="POST" onsubmit="return validateForm()">
             
             <fieldset>
