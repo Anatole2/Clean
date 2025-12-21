@@ -99,7 +99,7 @@ class SqlUserSubscriptionRepositoryTest extends IntegrationTestCase
       new DateTimeImmutable('2025-01-01'),
       new DateTimeImmutable('2025-01-31'),
       $schedule,
-      false // ❌ Inactif
+      false
     );
     $this->repo->save($sub);
 
@@ -293,7 +293,7 @@ class SqlUserSubscriptionRepositoryTest extends IntegrationTestCase
       new DateTimeImmutable('2025-01-01 00:00'),
       new DateTimeImmutable('2025-01-31 23:59'),
       $schedule,
-      false // ❌ Inactif (ex: annulé ou paiement échoué)
+      false
     );
     $this->repo->save($subInactive);
 

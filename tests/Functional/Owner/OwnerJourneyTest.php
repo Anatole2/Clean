@@ -25,7 +25,6 @@ class OwnerJourneyTest extends FunctionalTestCase
       'headers' => ['Accept' => 'application/json']
     ]);
 
-    // On accepte 200 ou 201
     $this->assertTrue(in_array($res->getStatusCode(), [200, 201]), "Échec inscription owner");
 
     // ==========================================
@@ -47,14 +46,10 @@ class OwnerJourneyTest extends FunctionalTestCase
         'name' => 'Parking Opéra',
         'latitude' => 48.87,
         'longitude' => 2.33,
-        'totalPlaces' => 50,       // Correspond à $input['totalPlaces']
-
-        // Clé spécifique attendue par ton contrôleur (Ligne 34)
+        'totalPlaces' => 50,
         'priceGridConfig' => [
           '60' => 200 // 60 min => 200 centimes
         ],
-
-        // Clé et structure spécifiques attendues (Lignes 45-53)
         'openingHoursConfig' => [
           [
             'startDay'  => 1,      // Lundi

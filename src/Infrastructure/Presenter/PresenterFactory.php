@@ -21,17 +21,12 @@ class PresenterFactory
     $format = $isJson ? 'Json' : 'Html';
 
     // 2. Construction du nom de classe
-    // Attention : Assure-toi que $useCaseName correspond bien à tes dossiers (ex: "Owner\CreateParking")
     $className = "App\\Infrastructure\\Presenter\\{$useCaseName}\\{$format}Presenter";
-    // Note: J'ai simplifié le nommage ici, vérifie si tes fichiers s'appellent 
-    // "HtmlCreateParkingPresenter" ou juste "HtmlPresenter" dans le dossier CreateParking.
-    // Si tes fichiers s'appellent "HtmlCreateParkingPresenter", garde ta logique :
     $shortName = array_slice(explode('\\', $useCaseName), -1)[0]; // Récupère "CreateParking" depuis "Owner\CreateParking"
     $className = "App\\Infrastructure\\Presenter\\{$useCaseName}\\{$format}{$shortName}Presenter";
 
     // 3. Fallback & Instanciation
     if (!class_exists($className)) {
-      // Si pas de HTML, on force le JSON
       $format = 'Json';
       $className = "App\\Infrastructure\\Presenter\\{$useCaseName}\\Json{$shortName}Presenter";
 
@@ -43,10 +38,9 @@ class PresenterFactory
     // 4. Headers et Retour
     if ($format === 'Json') {
       header('Content-Type: application/json');
-      return new $className(); // Le JSON n'a pas besoin de Twig
+      return new $className();
     } else {
       header('Content-Type: text/html; charset=utf-8');
-      // 👇 C'est ICI que la magie opère : on donne Twig au presenter HTML
       return new $className($this->twig);
     }
   }

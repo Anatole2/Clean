@@ -32,7 +32,7 @@ class EnterParkingController extends AbstractController
         'entry_time' => $response->session->getEntryTime()->format('Y-m-d H:i:s')
       ]);
     } catch (\Exception $e) {
-      $this->sendError($e->getMessage(), 400); // 400 Bad Request (ex: Pas de résa)
+      $this->sendError($e->getMessage(), 400);
     }
   }
 }

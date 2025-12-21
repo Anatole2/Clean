@@ -89,7 +89,6 @@ class SqlReservationRepository implements ReservationRepositoryInterface
 
     $row = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-    // CORRECTION : Appel à la méthode qu'on définit juste en dessous
     return $row ? $this->hydrate($row) : null;
   }
   public function findByParkingId(string $parkingId): array
@@ -127,7 +126,6 @@ class SqlReservationRepository implements ReservationRepositoryInterface
   }
   public function calculateRevenue(string $parkingId, \DateTimeImmutable $start, \DateTimeImmutable $end): int
   {
-    // On somme le price_paid des réservations CONFIRMÉES dont la date de FIN est dans le mois
     $stmt = $this->connection->prepare("
             SELECT SUM(price_paid) FROM reservations 
             WHERE parking_id = :pid 
@@ -142,7 +140,6 @@ class SqlReservationRepository implements ReservationRepositoryInterface
       'end' => $end->format('Y-m-d H:i:s')
     ]);
 
-    // Si null (pas de résultats), on retourne 0
     return (int) $stmt->fetchColumn();
   }
   private function hydrate(array $row): Reservation

@@ -19,7 +19,6 @@ class HtmlSubscribeToParkingPlanPresenter implements PresenterInterface
    */
   public function present($response): string
   {
-    // On redirige vers une page de confirmation simple
     return $this->twig->render('user/subscription_parking_success.html.twig', [
       'subscription' => $response->subscription
     ]);

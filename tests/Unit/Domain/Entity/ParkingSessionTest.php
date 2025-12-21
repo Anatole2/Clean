@@ -55,7 +55,6 @@ class ParkingSessionTest extends TestCase
     $entry = new DateTimeImmutable('12:00');
     $session = new ParkingSession('s1', 'p1', 'u1', 'r1', $entry);
 
-    // Erreur : Sortie à 11:00 alors qu'entré à 12:00
     $session->close(new DateTimeImmutable('11:00'), 100);
   }
 }

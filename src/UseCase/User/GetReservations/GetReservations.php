@@ -27,9 +27,6 @@ class GetReservations
     // 3. Mapping Entité -> DTO
     $summaries = array_map(function ($entity) use ($now) {
 
-      // Règle métier : 
-      // - Le statut doit être CONFIRMED
-      // - ET la date de fin doit être dans le passé ($now > endTime)
       $isConfirmed = $entity->getStatus() === Reservation::STATUS_CONFIRMED;
       $isPast = $now > $entity->getEndTime();
 

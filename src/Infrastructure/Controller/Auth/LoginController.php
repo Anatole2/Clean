@@ -43,7 +43,6 @@ class LoginController extends AbstractController
       $request = new LoginRequest($email, $password);
       $response = $this->useCase->execute($request);
 
-      // ✅ SUCCÈS : On place le Cookie
       $this->setAuthCookie($response->token);
 
       // Si c'est une API (JSON demandée via cURL/Postman)

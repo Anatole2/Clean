@@ -79,20 +79,12 @@ class ExitParking
       return $reservation->getEndTime();
     }
 
-    // Cas B : C'est un Abonnement
-    // Pour simplifier : Si l'utilisateur a un abonnement valide À L'INSTANT T, c'est bon.
-    // S'il n'en a plus, on considère qu'il aurait dû sortir hier (ou au début de session).
     $sub = $this->subscriptionRepo->findActiveForUser($session->getUserId(), $session->getParkingId(), $now);
 
     if ($sub) {
-      // Il est en règle actuellement grâce à son abonnement -> Pas de dépassement
-      // On renvoie "Maintenant" (ou le futur), donc $now > $allowed sera Faux.
       return $now->modify('+1 minute');
     }
 
-    // S'il n'a pas d'abonnement valide maintenant, c'est qu'il est en infraction.
-    // Pour simplifier le calcul rétroactif complexe, on dit que la limite était son heure d'entrée
-    // (Il paiera donc tout le séjour + pénalité).
     return $session->getEntryTime();
   }
 }

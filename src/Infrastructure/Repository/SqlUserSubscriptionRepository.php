@@ -54,7 +54,6 @@ class SqlUserSubscriptionRepository implements UserSubscriptionRepositoryInterfa
 
     $results = [];
     while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-      // CORRECTION : On utilise hydrate ici aussi
       $results[] = $this->hydrate($row);
     }
     return $results;
@@ -81,7 +80,6 @@ class SqlUserSubscriptionRepository implements UserSubscriptionRepositoryInterfa
     $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
     foreach ($rows as $row) {
-      // CORRECTION : hydrate est maintenant bien défini
       $sub = $this->hydrate($row);
 
       // Vérification logicielle des horaires (Schedule)
@@ -144,8 +142,6 @@ class SqlUserSubscriptionRepository implements UserSubscriptionRepositoryInterfa
   }
   public function calculateRevenue(string $parkingId, \DateTimeImmutable $start, \DateTimeImmutable $end): int
   {
-    // On somme le price des abonnements dont la date de DÉBUT (achat) est dans le mois
-    // Note: Utilise bien 'start_date' comme vu précédemment
     $stmt = $this->connection->prepare("
             SELECT SUM(price) FROM user_subscriptions 
             WHERE parking_id = :pid 

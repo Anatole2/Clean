@@ -67,7 +67,6 @@ class WeeklySchedule
 
   private function toAbsoluteMinute(int $day, string $time): int
   {
-    // 👇 CORRECTION ICI : On remet le message long attendu par le test
     if ($day < 1 || $day > 7) {
       throw new InvalidArgumentException("Le jour doit être entre 1 (Lundi) et 7 (Dimanche)");
     }

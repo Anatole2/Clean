@@ -19,8 +19,6 @@ class MongoReservationRepository implements ReservationRepositoryInterface
   {
     $this->collection = $client->selectDatabase($databaseName)->selectCollection('reservations');
 
-    // Index recommandés pour la performance (optionnel mais bien vu)
-    // On cherche souvent par parking_id ou user_id
     $this->collection->createIndex(['parking_id' => 1]);
     $this->collection->createIndex(['user_id' => 1]);
   }
@@ -32,8 +30,6 @@ class MongoReservationRepository implements ReservationRepositoryInterface
       'user_id' => $reservation->getUserId(),
       'parking_id' => $reservation->getParkingId(),
 
-      // 📅 MONGODB DATE : Conversion DateTimeImmutable -> BSON UTCDateTime
-      // Multiplié par 1000 car Mongo stocke des millisecondes
       'start_time' => new UTCDateTime($reservation->getStartTime()->getTimestamp() * 1000),
       'end_time' => new UTCDateTime($reservation->getEndTime()->getTimestamp() * 1000),
 
@@ -83,7 +79,6 @@ class MongoReservationRepository implements ReservationRepositoryInterface
     return $reservations;
   }
 
-  // ⚡️ Logique de chevauchement (Overlapping)
   public function countOverlappingReservations(string $parkingId, DateTimeImmutable $start, DateTimeImmutable $end): int
   {
     // Conversion des dates requises en format Mongo
@@ -101,7 +96,6 @@ class MongoReservationRepository implements ReservationRepositoryInterface
     return $count;
   }
 
-  // ⚡️ Trouver une réservation active à l'instant T
   public function findActiveForUser(string $userId, string $parkingId, DateTimeImmutable $now): ?Reservation
   {
     $bsonNow = new UTCDateTime($now->getTimestamp() * 1000);
@@ -129,7 +123,6 @@ class MongoReservationRepository implements ReservationRepositoryInterface
     ]);
   }
 
-  // 💰 CALCUL DU REVENU (Agrégation)
   public function calculateRevenue(string $parkingId, DateTimeImmutable $start, DateTimeImmutable $end): int
   {
     $bsonStart = new UTCDateTime($start->getTimestamp() * 1000);
@@ -182,7 +175,6 @@ class MongoReservationRepository implements ReservationRepositoryInterface
     $start = $bsonStart->toDateTimeImmutable();
     $end   = $bsonEnd->toDateTimeImmutable();
 
-    // date_default_timezone_get() récupérera 'Europe/Paris' défini dans l'étape 1
     $appTimeZone = new \DateTimeZone(date_default_timezone_get());
 
     $start = $start->setTimezone($appTimeZone);
@@ -192,7 +184,7 @@ class MongoReservationRepository implements ReservationRepositoryInterface
       $doc['_id'],
       $doc['user_id'],
       $doc['parking_id'],
-      $start, // Méthode native très pratique !
+      $start,
       $end,
       (int) $doc['price_paid'],
       $doc['status'] ?? 'CONFIRMED'

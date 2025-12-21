@@ -14,7 +14,6 @@ class JsonGetReservationsPresenter implements PresenterInterface
    */
   public function present($response): string
   {
-    // Les DTOs ReservationSummary sont déjà propres, on peut les encoder directement
     return json_encode($response->reservations);
   }
 }

@@ -21,7 +21,6 @@ class CreateParking
   public function execute(CreateParkingRequest $request): CreateParkingResponse
   {
     // 1. Instanciation des Value Objects
-    // Cela valide automatiquement les règles métier (coordonnées valides, prix positifs...)
     $coordinates = new GpsCoordinates($request->latitude, $request->longitude);
     $priceGrid = new PriceGrid($request->priceGridConfig);
     $openingHours = new WeeklySchedule($request->openingHoursConfig);

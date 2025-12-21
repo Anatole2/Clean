@@ -77,9 +77,6 @@ class UserJourneyTest extends FunctionalTestCase
 
     $this->assertTrue(in_array($res->getStatusCode(), [200, 201]), "Échec réservation");
 
-    // Maintenant que la réservation est créée, on force son heure de début à "Maintenant - 10 min"
-    // directement en SQL pour pouvoir tester l'entrée immédiate.
-    // Cela simule le fait que l'utilisateur a attendu le lendemain.
     $this->pdo->exec("
             UPDATE reservations 
             SET start_time = DATE_SUB(NOW(), INTERVAL 10 MINUTE), 

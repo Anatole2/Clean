@@ -41,7 +41,7 @@ class SubscribeToParkingPlan
 
     // 3. Gestion et Validation des Dates
     $startDate = DateTimeImmutable::createFromFormat('Y-m-d', $request->startDate);
-    $endDate = DateTimeImmutable::createFromFormat('Y-m-d', $request->endDate); // 👈 Lecture date fin
+    $endDate = DateTimeImmutable::createFromFormat('Y-m-d', $request->endDate);
 
     if (!$startDate || !$endDate) {
       throw new Exception("Format de date invalide (attendu: YYYY-MM-DD).");
@@ -82,9 +82,6 @@ class SubscribeToParkingPlan
     }
 
     // 5. Calcul du PRIX TOTAL (Optionnel mais recommandé)
-    // Ici, on stocke le prix mensuel (Unit Price) dans l'entité pour référence (Snapshot).
-    // Si tu voulais stocker le "Prix Total à payer", il faudrait faire un calcul ici.
-    // Pour l'instant, on garde le fonctionnement "Prix du forfait" (MonthlyPrice).
 
     // 6. Création de l'entité
     $subscription = new UserSubscription(
@@ -95,7 +92,7 @@ class SubscribeToParkingPlan
       $selectedPlan->getName(),
       $selectedPlan->getMonthlyPrice(),
       $startDate,
-      $endDate, // 👈 On utilise la date de fin choisie par l'user
+      $endDate,
       $selectedPlan->getSchedule()
     );
 

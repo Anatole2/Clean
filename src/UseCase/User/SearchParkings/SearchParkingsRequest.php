@@ -11,7 +11,6 @@ class SearchParkingsRequest
     public float $longitude,
     public float $radiusInKm = 15.0
   ) {
-    // On valide juste le rayon car c'est spécifique à la requête de recherche
     if ($this->radiusInKm <= 0) {
       throw new \InvalidArgumentException("Le rayon de recherche doit être positif.");
     }

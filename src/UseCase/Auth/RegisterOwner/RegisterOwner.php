@@ -8,20 +8,6 @@ use App\Domain\Entity\Owner;
 use App\Domain\Repository\AccountRepositoryInterface;
 use App\Domain\Service\IdGeneratorInterface; // Utilise ton RamseyIdGenerator
 
-/**
- * Gère l'inscription des Propriétaires de parking (Owners).
- *
- * --- NOTE D'ARCHITECTURE ---
- * Séparation explicite vis-à-vis de `RegisterUser` pour anticiper l'évolution du métier.
- *
- * Les propriétaires peuvent à l'avenir avoir des contraintes spécifiques comme :
- * - Ajout de données financières (IBAN) pour les versements.
- * - Ajout de données légales (SIRET, Identité) pour la conformité.
- * - Acceptation de CGV spécifiques "Vendeurs".
- *
- * Cette séparation évite de coupler la logique d'inscription "Client" et "Fournisseur".
- */
-
 
 class RegisterOwner
 {

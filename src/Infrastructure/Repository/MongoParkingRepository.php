@@ -21,8 +21,6 @@ class MongoParkingRepository implements ParkingRepositoryInterface
   {
     $this->collection = $client->selectDatabase($databaseName)->selectCollection('parkings');
 
-    // ⚡️ CRUCIAL : Création de l'index géospatial pour le calcul de distance
-    // Sans ça, la méthode findNearby() échouera.
     $this->collection->createIndex(['location' => '2dsphere']);
   }
 
@@ -34,8 +32,6 @@ class MongoParkingRepository implements ParkingRepositoryInterface
       'owner_id' => $parking->getOwnerId(),
       'name' => $parking->getName(),
 
-      // 🌍 GEOJSON : Format standard pour MongoDB
-      // Attention : [Longitude, Latitude] (Inverse de Google Maps)
       'location' => [
         'type' => 'Point',
         'coordinates' => [
@@ -138,13 +134,10 @@ class MongoParkingRepository implements ParkingRepositoryInterface
   private function mapDocumentToEntity(array $doc): Parking
   {
     // 1. Extraction Lat/Lon depuis le GeoJSON
-    // Rappel : coordinates[0] = Lon, coordinates[1] = Lat
     $lon = $doc['location']['coordinates'][0];
     $lat = $doc['location']['coordinates'][1];
 
     // 2. Normalisation des données imbriquées
-    // Mongo retourne des objets BSONArray, on force la conversion en array PHP pur
-    // L'astuce json_encode/json_decode est la plus robuste ici pour nettoyer les types BSON
     $priceData = json_decode(json_encode($doc['price_grid']), true);
     $hoursData = json_decode(json_encode($doc['opening_hours']), true);
     $plansData = json_decode(json_encode($doc['subscription_plans']), true) ?: [];

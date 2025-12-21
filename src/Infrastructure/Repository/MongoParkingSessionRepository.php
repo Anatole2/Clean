@@ -62,7 +62,6 @@ class MongoParkingSessionRepository implements ParkingSessionRepositoryInterface
 
   public function findActiveByUser(string $userId): ?ParkingSession
   {
-    // WHERE user_id = :uid AND exit_time IS NULL
     $doc = $this->collection->findOne([
       'user_id' => $userId,
       'exit_time' => null
@@ -113,10 +112,7 @@ class MongoParkingSessionRepository implements ParkingSessionRepositoryInterface
     return $sessions;
   }
 
-  /**
-   * 🌶️ LE CHALLENGE : Jointure SQL en Mongo
-   * On utilise un Pipeline d'Agrégation ($lookup)
-   */
+
   public function countOverstayingCars(string $parkingId, DateTimeImmutable $checkTime): int
   {
     $bsonCheckTime = new UTCDateTime($checkTime->getTimestamp() * 1000);

@@ -4,16 +4,11 @@ date_default_timezone_set('Europe/Paris');
 
 // Repositories
 use App\Infrastructure\Repository\RepositoryFactory;
-use App\Infrastructure\Repository\SqlParkingRepository;
-use App\Infrastructure\Repository\SqlAccountRepository;
-use App\Infrastructure\Repository\SqlReservationRepository;
-use App\Infrastructure\Repository\SqlUserSubscriptionRepository;
 use App\Domain\Repository\ParkingRepositoryInterface;
 use App\Domain\Repository\AccountRepositoryInterface;
 use App\Domain\Repository\ReservationRepositoryInterface;
 use App\Domain\Repository\UserSubscriptionRepositoryInterface;
 use App\Domain\Repository\ParkingSessionRepositoryInterface;
-use App\Infrastructure\Repository\SqlParkingSessionRepository;
 
 use MongoDB\Client;
 
@@ -132,11 +127,6 @@ $c[Client::class] = function () {
 };
 
 // --- 2. Repositories (MAPPING INTERFACE => IMPLEMENTATION) ---
-/* $c[ParkingRepositoryInterface::class] = fn($c) => new SqlParkingRepository($c[PDO::class]()); */
-/* $c[AccountRepositoryInterface::class] = fn($c) => new SqlAccountRepository($c[PDO::class]()); */
-/* $c[ReservationRepositoryInterface::class] = fn($c) => new SqlReservationRepository($c[PDO::class]()); */
-/* $c[UserSubscriptionRepositoryInterface::class] = fn($c) => new SqlUserSubscriptionRepository($c[PDO::class]()); */
-/* $c[ParkingSessionRepositoryInterface::class] = fn($c) => new SqlParkingSessionRepository($c[PDO::class]()); */
 $repoFactory = new RepositoryFactory($c);
 
 $c[AccountRepositoryInterface::class] = fn() => $repoFactory->create(AccountRepositoryInterface::class);

@@ -12,8 +12,8 @@ class GetParkingRevenueResponse
     public Parking $parking,
     public int $month,
     public int $year,
-    public int $revenueReservations, // En centimes
-    public int $revenueSubscriptions, // En centimes
-    public int $totalRevenue // En centimes
+    public int $revenueReservations,
+    public int $revenueSubscriptions,
+    public int $totalRevenue
   ) {}
 }

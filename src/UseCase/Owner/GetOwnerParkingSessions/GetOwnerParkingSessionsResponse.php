@@ -10,6 +10,6 @@ class GetOwnerParkingSessionsResponse
 {
   public function __construct(
     public Parking $parking,
-    public array $sessions // Tableau de ParkingSession
+    public array $sessions
   ) {}
 }

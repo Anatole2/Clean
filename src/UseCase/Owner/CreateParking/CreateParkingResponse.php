@@ -24,7 +24,6 @@ class CreateParkingResponse
       id: $parking->getId(),
       name: $parking->getName(),
       totalPlaces: $parking->getTotalPlaces(),
-      // On extrait les valeurs primitives des Value Objects
       latitude: $parking->getCoordinates()->getLatitude(),
       longitude: $parking->getCoordinates()->getLongitude(),
       priceGrid: $parking->getPriceGrid()->toArray(),

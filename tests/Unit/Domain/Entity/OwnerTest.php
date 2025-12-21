@@ -52,7 +52,6 @@ class OwnerTest extends TestCase
 
   public function testGetters(): void
   {
-    // Ce test sert juste à monter le coverage à 100% sur les accesseurs simples
     $owner = Owner::reconstitute('id-1', 'email@test.com', 'hash', 'First', 'Last');
 
     $this->assertEquals('id-1', $owner->getId());

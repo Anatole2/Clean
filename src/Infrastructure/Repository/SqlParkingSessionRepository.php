@@ -58,10 +58,6 @@ class SqlParkingSessionRepository implements ParkingSessionRepositoryInterface
 
   public function countOverstayingCars(string $parkingId, DateTimeImmutable $checkTime): int
   {
-    // On cherche les sessions actives (pas encore sortis)
-    // DONT la réservation associée est terminée avant l'heure de vérification.
-    // (Note: on ne compte PAS ceux qui ont un abonnement pour l'instant, 
-    // on se concentre sur les réservations comme demandé)
     $sql = "
             SELECT COUNT(*) 
             FROM parking_sessions s

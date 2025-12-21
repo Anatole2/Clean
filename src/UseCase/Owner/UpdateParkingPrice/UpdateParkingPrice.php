@@ -6,7 +6,7 @@ namespace App\UseCase\Owner\UpdateParkingPrice;
 
 use App\Domain\Repository\ParkingRepositoryInterface;
 use App\Domain\ValueObject\PriceGrid;
-use Exception; // Ou une exception métier personnalisée comme ParkingNotFoundException
+use Exception;
 
 class UpdateParkingPrice
 {

@@ -81,7 +81,6 @@ class MongoUserSubscriptionRepository implements UserSubscriptionRepositoryInter
   {
     $bsonNow = new UTCDateTime($now->getTimestamp() * 1000);
 
-    // On récupère tous les candidats potentiels (actifs et dans les dates)
     $cursor = $this->collection->find([
       'user_id' => $userId,
       'parking_id' => $parkingId,
@@ -91,7 +90,6 @@ class MongoUserSubscriptionRepository implements UserSubscriptionRepositoryInter
     ]);
 
     // Vérification logicielle (Domain Logic) des horaires
-    // Exactement comme dans la version SQL
     foreach ($cursor as $doc) {
       $sub = $this->hydrate((array)$doc);
       if ($sub->occupiesSpotAt($now)) {
@@ -150,7 +148,6 @@ class MongoUserSubscriptionRepository implements UserSubscriptionRepositoryInter
       [
         '$match' => [
           'parking_id' => $parkingId,
-          // On filtre sur la date d'achat (start_date) comme en SQL
           'start_date' => [
             '$gte' => $bsonStart,
             '$lte' => $bsonEnd
@@ -177,7 +174,6 @@ class MongoUserSubscriptionRepository implements UserSubscriptionRepositoryInter
   private function hydrate(array $doc): UserSubscription
   {
     // 1. Gestion du Timezone
-    // On s'aligne sur la config globale (date_default_timezone_set du bootstrap)
     $appTimeZone = new \DateTimeZone(date_default_timezone_get());
 
     // 2. Gestion du Schedule (inchangé)

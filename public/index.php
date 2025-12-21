@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-// On charge l'autoloader et les dépendances
+// Chargement de l'autoloader et des dépendances
 require __DIR__ . '/../vendor/autoload.php';
 $container = require __DIR__ . '/../config/dependencies.php';
 
@@ -51,12 +51,10 @@ try {
     $userPayload = $authMiddleware->authenticate();
     $_REQUEST['auth_user'] = (array) $userPayload;
   } catch (Exception $e) {
-    // Utilisateur non connecté, on continue
   }
 
   // 2. DÉFINITION DES ROUTES
   $dispatcher = simpleDispatcher(function (RouteCollector $r) {
-    // Dans ton fichier de routes
 
     $r->addRoute('GET', '/', HomeController::class);
     // Owner

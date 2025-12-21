@@ -15,7 +15,6 @@ class HtmlCreateReservationPresenter implements PresenterInterface
   public function present(object $response): string
   {
     /** @var CreateReservationResponse $response */
-    // On affiche une page de confirmation
     return $this->twig->render('user/reservation_success.html.twig', [
       'reservation' => $response->reservation
     ]);

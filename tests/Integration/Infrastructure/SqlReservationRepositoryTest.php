@@ -87,7 +87,7 @@ class SqlReservationRepositoryTest extends IntegrationTestCase
       new DateTimeImmutable('2025-01-01 14:00'),
       new DateTimeImmutable('2025-01-01 16:00'),
       500,
-      'CANCELLED' // ❌ Annulée
+      'CANCELLED'
     );
     $this->repo->save($res);
 
@@ -235,7 +235,7 @@ class SqlReservationRepositoryTest extends IntegrationTestCase
       new DateTimeImmutable('2025-01-01 10:00'),
       new DateTimeImmutable('2025-01-01 14:00'),
       500,
-      'CANCELLED' // ❌
+      'CANCELLED'
     );
     $this->repo->save($resCancelled);
 
@@ -279,7 +279,7 @@ class SqlReservationRepositoryTest extends IntegrationTestCase
       '2025-01-05 10:00',
       '2025-01-05 12:00',
       5000,
-      'CANCELLED' // ❌
+      'CANCELLED'
     );
 
     // 4. Réservation Autre Parking (NE COMPTE PAS)

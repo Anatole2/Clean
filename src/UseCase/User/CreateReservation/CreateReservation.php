@@ -28,7 +28,6 @@ class CreateReservation
       throw new Exception("Parking introuvable.");
     }
 
-    // --- 🆕 AJOUT : VÉRIFICATION DES HORAIRES D'OUVERTURE ---
     $openingHours = $parking->getOpeningHours(); // Assure-toi que ce getter existe dans Parking
 
     // On vérifie que le parking est ouvert au moment de l'arrivée ET au moment du départ
@@ -67,10 +66,8 @@ class CreateReservation
     return new CreateReservationResponse($reservation);
   }
 
-  // ... (Ta méthode calculateOccupiedSpots reste inchangée)
   private function calculateOccupiedSpots(CreateReservationRequest $request): int
   {
-    // ...
     $reservationCount = $this->reservationRepo->countOverlappingReservations(
       $request->parkingId,
       $request->startTime,

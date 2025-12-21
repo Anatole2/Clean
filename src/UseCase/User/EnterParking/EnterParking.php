@@ -45,15 +45,15 @@ class EnterParking
       throw new Exception("Accès refusé : Aucune réservation ou abonnement valide pour ce créneau.");
     }
 
-    // 5. Création de la Session (La barrière s'ouvre 🚧 🚗)
+    // 5. Création de la Session (La barrière s'ouvre)
     $session = new ParkingSession(
       $this->idGenerator->generate(),
       $request->parkingId,
       $request->userId,
-      $reservation?->getId(), // On lie la résa si elle existe
+      $reservation?->getId(),
       $now,
-      null, // Pas encore sorti
-      0     // Rien payé en plus pour l'instant
+      null,
+      0
     );
 
     $this->sessionRepo->save($session);

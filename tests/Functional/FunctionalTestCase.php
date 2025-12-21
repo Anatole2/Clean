@@ -40,7 +40,7 @@ class FunctionalTestCase extends TestCase
       'http_errors' => false,
       'cookies' => true,
       'headers' => [
-        'X-Test-Mode' => 'true' // <--- C'est la clé !
+        'X-Test-Mode' => 'true'
       ]
     ]);
   }
@@ -54,8 +54,5 @@ class FunctionalTestCase extends TestCase
     $this->pdo->exec("TRUNCATE TABLE parkings");
     $this->pdo->exec("TRUNCATE TABLE accounts");
     $this->pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
-
-    // Optionnel : Si tu veux être sûr que la structure est là,
-    // tu peux appeler initSchema() ici comme dans ton IntegrationTestCase.
   }
 }
