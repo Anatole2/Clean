@@ -11,7 +11,10 @@ RUN apt-get update && apt-get install -y \
 RUN pecl install xdebug && docker-php-ext-enable xdebug
 ENV XDEBUG_MODE=coverage
 
-# 👉 IMPORTANT : changer le DocumentRoot vers /public
+# Installation de l'extension MongoDB
+RUN pecl install mongodb && docker-php-ext-enable mongodb
+
+# Changer le DocumentRoot vers /public
 RUN sed -i 's#/var/www/html#/var/www/html/public#g' /etc/apache2/sites-available/000-default.conf
 
 # Activer mod_rewrite et autoriser .htaccess
