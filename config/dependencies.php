@@ -408,7 +408,7 @@ $c[GetUnauthorizedParkersController::class] = fn($c) => new GetUnauthorizedParke
 );
 
 $c[HomeController::class] = fn($c) => new HomeController(
-  $c[Environment::class]($c)
+  $c[PresenterFactory::class]($c)
 );
 
 // --- 7. Configuration de Twig ---

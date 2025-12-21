@@ -5,16 +5,19 @@ declare(strict_types=1);
 namespace App\Infrastructure\Controller\Shared;
 
 use App\Infrastructure\Controller\AbstractController;
-use Twig\Environment;
+use App\Infrastructure\Presenter\PresenterFactory;
 
 class HomeController extends AbstractController
 {
-  public function __construct(private Environment $twig) {}
+  public function __construct(
+    private PresenterFactory $presenterFactory,
+  ) {}
 
   public function __invoke()
   {
-    $content = $this->twig->render('index.html.twig');
+    $response = new \stdClass();
+    $presenter = $this->presenterFactory->create('Shared\\Home');
 
-    echo $content;
+    echo $presenter->present($response);
   }
 }
